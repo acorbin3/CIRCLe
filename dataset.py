@@ -29,11 +29,11 @@ class SkinDataset():
         if torch.is_tensor(idx):
             idx = idx.tolist()
         img_name = os.path.join(self.root_dir,
-                                self.df.loc[self.df.index[idx], 'hasher'] + ".jpg")
+                                self.df.loc[self.df.index[idx], 'md5hash'] + ".jpg")
         image = Image.open(img_name)
 
         label = self.df.loc[self.df.index[idx], 'low']
-        fitzpatrick = self.df.loc[self.df.index[idx], 'fitzpatrick'] - 1
+        fitzpatrick = self.df.loc[self.df.index[idx], 'fitzpatrick_scale'] - 1
         if self.transform:
             image = self.transform(image)
 
@@ -52,16 +52,16 @@ def get_fitz_dataloaders(root, holdout_mode, batch_size, shuffle, partial_skin_t
     test = pd.read_csv(test_dir)
 
     for s in all_domains:
-        print("\ttrain: skin type", s, ":", len(train[train['fitzpatrick'] == s]))
+        print("\ttrain: skin type", s, ":", len(train[train['fitzpatrick_scale'] == s]))
 
 
-    train = train.loc[train['fitzpatrick'] != -1]
-    val = val.loc[val['fitzpatrick'] != -1]
-    test = test.loc[test['fitzpatrick'] != -1]
+    train = train.loc[train['fitzpatrick_scale'] != -1]
+    val = val.loc[val['fitzpatrick_scale'] != -1]
+    test = test.loc[test['fitzpatrick_scale'] != -1]
 
     if len(partial_skin_types) > 0:
-        train_1 = train.loc[~train['fitzpatrick'].isin(partial_skin_types)]
-        train_2 = train.loc[train['fitzpatrick'].isin(partial_skin_types)]
+        train_1 = train.loc[~train['fitzpatrick_scale'].isin(partial_skin_types)]
+        train_2 = train.loc[train['fitzpatrick_scale'].isin(partial_skin_types)]
         
         if partial_ratio > 0:
             try:
@@ -80,14 +80,14 @@ def get_fitz_dataloaders(root, holdout_mode, batch_size, shuffle, partial_skin_t
                     random_state=None, #4242
                     )
             train = pd.concat([train_1, train_2_partial])
-            train.drop_duplicates(subset=['hasher'])
+            train.drop_duplicates(subset=['md5hash'])
             train.reset_index(drop=True, inplace=True)
         else:
             train = train_1
 
         print("After partial skin type edit:")
         for s in all_domains:
-            print("\ttrain: skin type", s, ":", len(train[train['fitzpatrick'] == s]))
+            print("\ttrain: skin type", s, ":", len(train[train['fitzpatrick_scale'] == s]))
 
     print("train size:", len(train))
     print("val size:", len(val))
