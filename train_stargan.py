@@ -18,7 +18,9 @@ def main(config):
         os.makedirs(config.model_save_dir)
 
     # Data loader.
-    train_loader, _, _ = get_fitz_dataloaders(root='../data/fitz17k/images/all/', batch_size=config.batch_size,
+    train_loader, _, _ = get_fitz_dataloaders(root='../data/fitz17k/images/all/',
+                                              holdout_mode="random_holdout",
+                                              batch_size=config.batch_size,
                                               shuffle=True)
 
 
