@@ -91,8 +91,8 @@ def get_fitz_dataloaders(root, holdout_mode, batch_size, shuffle, partial_skin_t
 
     print("train size:", len(train))
     print("val size:", len(val))
-    print("train skin types:", train.fitzpatrick.unique())
-    print("val skin types:", val.fitzpatrick.unique())
+    print("train skin types:", train.fitzpatrick_scale.unique())
+    print("val skin types:", val.fitzpatrick_scale.unique())
     label_codes = sorted(list(train['label'].unique()))
     print("train skin conditions:", len(label_codes))
     label_codes1 = sorted(list(val['label'].unique()))
