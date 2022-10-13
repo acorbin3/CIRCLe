@@ -32,7 +32,7 @@ class SkinDataset():
                                 self.df.loc[self.df.index[idx], 'md5hash'] + ".jpg")
         image = Image.open(img_name)
 
-        label = self.df.loc[self.df.index[idx], 'low']
+        label = self.df.loc[self.df.index[idx], 'label']
         fitzpatrick = self.df.loc[self.df.index[idx], 'fitzpatrick_scale'] - 1
         if self.transform:
             image = self.transform(image)
@@ -67,15 +67,15 @@ def get_fitz_dataloaders(root, holdout_mode, batch_size, shuffle, partial_skin_t
             try:
                 train_2_partial, _, _, _ = train_test_split(
                     train_2,
-                    train_2.low,
+                    train_2.label,
                     train_size=partial_ratio,
                     random_state=None, #4242
-                    stratify=train_2.low)
+                    stratify=train_2.label)
             except:
                 print("Unable to stratify -> skipped the stratification")
                 train_2_partial, _, _, _ = train_test_split(
                     train_2,
-                    train_2.low,
+                    train_2.label,
                     train_size=partial_ratio,
                     random_state=None, #4242
                     )
