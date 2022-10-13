@@ -18,9 +18,8 @@ def main(config):
         os.makedirs(config.model_save_dir)
 
     # Data loader.
-    train_loader, _, _ = get_fitz_dataloaders(root='../data/fitz17k/images/all/', holdout_mode='random_holdout',
-                                              test_envs=[], batch_size=config.batch_size,
-                                              shuffle=True, num_workers=8, use_all=True)
+    train_loader, _, _ = get_fitz_dataloaders(root='../data/fitz17k/images/all/', batch_size=config.batch_size,
+                                              shuffle=True)
 
 
     # Solver for training and testing StarGAN.
