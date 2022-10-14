@@ -11,7 +11,7 @@ class Model(BaseModel):
 
         self.out_layer = nn.Linear(hidden_dim, config.num_classes)
         self.trans = load_stargan(
-            config.gan_path + 'stargan_last_G.ckpt')
+            config.gan_path + 'stargan_last-G.ckpt')
         self.trans.eval()
 
         self.alpha = config.alpha
