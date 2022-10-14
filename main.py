@@ -43,17 +43,17 @@ torch.manual_seed(flags.seed)
 torch.cuda.manual_seed(flags.seed)
 torch.cuda.manual_seed_all(flags.seed)
 torch.backends.cudnn.benchmark = False
-torch.backends.cudnn.deterministic = True                                                                  
+torch.backends.cudnn.deterministic = True
 
 
 # Data loader.
-train_loader, val_loader, _ = get_fitz_dataloaders(root='../data/fitz17k/images/all/',
-                                                            holdout_mode='random_holdout',
-                                                            batch_size=flags.batch_size,
-                                                            shuffle=False, 
-                                                            partial_skin_types=[], 
-                                                            partial_ratio=1.0
-                                                            )
+train_loader, val_loader, _ = get_fitz_dataloaders(root=flags.data_dir,
+                                                   holdout_mode='random_holdout',
+                                                   batch_size=flags.batch_size,
+                                                   shuffle=False,
+                                                   partial_skin_types=[],
+                                                   partial_ratio=1.0
+                                                   )
 
 # load models
 model = importlib.import_module('models.' + flags.model) \
