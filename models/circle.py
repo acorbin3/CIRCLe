@@ -21,14 +21,16 @@ class Model(BaseModel):
     def forward(self, x, y, d=None):
         # run the input into the base model
         z = F.relu(self.base(x))
+        print(f"orig_z {z}")
         # run the output of the base into the output layer to determine the class
         logits = self.out_layer(z)
+        print(f"logits {logits}")
         # compute the loss based on the expected y value
         loss = F.cross_entropy(logits, y)
 
         # some kind of correction, not quite sure
         correct = (torch.argmax(logits, 1) == y).sum().float() / x.shape[0]
-        # compute regurlization
+        # empty regurlization
         reg = loss.new_zeros([1])
         if self.training:
             if self.use_reg:
@@ -47,9 +49,11 @@ class Model(BaseModel):
                     # New generated image
                     x_new = self.trans(x, d_onehot, d_new_onehot)
                     # TODO - figure out dimentions
-                    print(f"x_new.shape : {x_new.shape} x_new.dim():{x_new.dim()} x_new.size():{x_new.size()}")
+                    print(f"x_new.shape : {x_new.shape} x_new.dim():{x_new.dim()} x_new.size():{x_new.size()} x_new.dtype:{x_new.dtype}")
+                    #print(x_new)
 
                 z_new = F.relu(self.base(x_new))
+                print(f"z_new.shape : {z_new.shape} z_new.dim():{z_new.dim()} z_new.size():{z_new.size()} z_new.dtype:{z_new.dtype}")
                 reg = self.alpha * F.mse_loss(z_new, z)
 
         return loss, reg, correct
