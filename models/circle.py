@@ -19,20 +19,35 @@ class Model(BaseModel):
         self.use_reg = use_reg
 
     def forward(self, x, y, d=None):
+        # run the input into the base model
         z = F.relu(self.base(x))
+        # run the output of the base into the output layer to determine the class
         logits = self.out_layer(z)
+        # compute the loss based on the expected y value
         loss = F.cross_entropy(logits, y)
+
+        # some kind of correction, not quite sure
         correct = (torch.argmax(logits, 1) == y).sum().float() / x.shape[0]
+        # compute regurlization
         reg = loss.new_zeros([1])
         if self.training:
             if self.use_reg:
                 with torch.no_grad():
-                    d_new = torch.randint(0, 6, (d.size(0), )).to(d.device)
+
+
+                    # encode fitzpatrick label of current image
                     d_onehot = d.new_zeros([d.shape[0], 6])
                     d_onehot.scatter_(1, d[:, None], 1)
+
+                    # generate random class to pick from
+                    d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
                     d_new_onehot = d.new_zeros([d.shape[0], 6])
                     d_new_onehot.scatter_(1, d_new[:, None], 1)
+
+                    # New generated image
                     x_new = self.trans(x, d_onehot, d_new_onehot)
+                    # TODO - figure out dimentions
+                    print(f"x_new.shape : {x_new.shape} x_new.dim():{x_new.dim()} x_new.size():{x_new.size()}")
 
                 z_new = F.relu(self.base(x_new))
                 reg = self.alpha * F.mse_loss(z_new, z)
