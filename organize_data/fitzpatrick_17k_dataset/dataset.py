@@ -98,6 +98,8 @@ def get_fitz_dataloaders(root, holdout_mode, batch_size, shuffle, partial_skin_t
     label_codes1 = sorted(list(val['label'].unique()))
     print("val skin conditions:", len(label_codes1))
 
+
+
     transformed_train = SkinDataset(
         df=train,
         root_dir=root,
