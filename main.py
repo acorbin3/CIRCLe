@@ -1,13 +1,11 @@
 import torch
 import random
-from torch import nn, optim
 import argparse
 import os, importlib
 from tqdm import tqdm
 import numpy as np
-from torch.utils import data
 from util import AverageMeter
-from dataset import get_fitz_dataloaders
+from organize_data.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
 
 parser = argparse.ArgumentParser(description='DG')
 parser.add_argument('--dataset', type=str, default='FitzPatrick17k')
