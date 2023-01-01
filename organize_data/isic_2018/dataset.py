@@ -1,12 +1,19 @@
 # Copyright (c) Facebook, Inc. and its affiliates. All Rights Reserved
 
 import os
+from pathlib import Path
+
 import torch
 from PIL import Image, ImageFile
 from torchvision import transforms
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
+
+import requests
+import zipfile
+import os
+from sklearn.preprocessing import LabelEncoder
 
 
 class ISIC2018SkinDataset():
@@ -38,6 +45,120 @@ class ISIC2018SkinDataset():
             image = self.transform(image)
 
         return image, mask, label, fitzpatrick
+
+
+def download_isic_2018_datasets():
+    """
+    Locations to get the ISIC 2018 task 3 dataset
+    !wget https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip
+    !wget https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_GroundTruth.zip
+    """
+    # check to see if we already have downloaded the zip files and extracted the zip files
+
+    image_count = len(list(Path("../ISIC_2018").glob("*.jpg")))
+    if image_count == 0:
+        images_url = "https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip"
+        download_and_extract(images_url, "../ISIC_2018/")
+
+    image_count = len(list(Path("../ISIC_2018/masks").glob("*.png")))
+    if image_count == 0:
+        masks_url = "https://isic2018task3masks.s3.amazonaws.com/isic_2018_mask_results1_2022_12_29.zip"
+        download_and_extract(masks_url, "../ISIC_2018/")
+
+        # the masks need to be resized to (600,450) to match the original image sizes.
+        target_size = (600, 450)
+        mask_directory = "../ISIC_2018/masks"
+        # Iterate over all the files in the directory
+        for file in os.listdir(mask_directory):
+            # Skip files that are not images
+            if not file.endswith(".jpg") and not file.endswith(".png"):
+                continue
+
+            # Open the image
+            im = Image.open(os.path.join(mask_directory, file))
+
+            # Resize the image
+            im_resized = im.resize(target_size)
+
+            # Save the resized image
+            im_resized.save(os.path.join(mask_directory, file))
+
+    gt_csv_count = Path("../ISIC_2018_GT").glob("*.csv")
+    if gt_csv_count == 0:
+        ground_truth_url = "https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_GroundTruth.zip"
+        download_and_extract(ground_truth_url, "../ISIC_2018_GT/")
+
+
+def download_and_extract(images_url, directory):
+    response = requests.get(images_url)
+    open("temp.zip", "wb").write(response.content)
+    # Unzip the file to the destination directory
+    with zipfile.ZipFile("temp.zip", "r") as zip_ref:
+        zip_ref.extractall(directory)
+    os.remove("temp.zip")
+
+
+def get_cached_dataframe():
+    """
+    This function is supposed to read a saved version of a dataframe that has Fitzpatrick skin type data pre-calculated
+    for the ISIC 2018 Task 3 dataset
+    """
+
+    orig_images = []
+    masks_images = []
+
+    # get the file names of the images
+    for file in Path("../ISIC_2018").glob("**/*.jpg"):
+        orig_images.append(file)
+
+        # no masks for Task 3, for now use empty strings
+        masks_images = [""] * len(orig_images)
+
+    # get the ground truth classificaiton data
+    dfs = []
+    for f in Path("../ISIC_2018_GT").glob("**/*.csv"):
+        if "ISIC" in str(f):
+            print(f)
+            dfs.append(pd.read_csv(f))
+
+    # Creating the main dataframe
+    isic_df = pd.DataFrame()
+    for file in Path(".").glob("**/*.csv"):
+        print(file)
+        if "isic_2018" in file.name and "saved_data" in file.name:
+            isic_df = pd.read_csv(file)
+            isic_df = isic_df.fillna("")
+    isic_df["image_path"] = orig_images
+    isic_df["mask_path"] = masks_images
+    isic_df["image_id"] = isic_df["image_path"].apply(lambda x: x.name.split('.')[0])
+    dfs[0].rename(columns={"image": "image_id"}, inplace=True)
+    isic_df = pd.merge(isic_df, dfs[0], on="image_id")
+
+    # Clean up columns for further process
+    # replaces 1's with column name
+    isic_df.loc[isic_df["MEL"] == 1.0, ["MEL"]] = "MEL"
+    isic_df.loc[isic_df["NV"] == 1.0, ["NV"]] = "NV"
+    isic_df.loc[isic_df["AKIEC"] == 1.0, ["AKIEC"]] = "AKIEC"
+    isic_df.loc[isic_df["BKL"] == 1.0, ["BKL"]] = "BKL"
+    isic_df.loc[isic_df["BCC"] == 1.0, ["BCC"]] = "BCC"
+    isic_df.loc[isic_df["DF"] == 1.0, ["DF"]] = "DF"
+    isic_df.loc[isic_df["VASC"] == 1.0, ["VASC"]] = "VASC"
+
+    # Clear out the 0's
+    isic_df.loc[isic_df["MEL"] == 0, ["MEL"]] = ""
+    isic_df.loc[isic_df["NV"] == 0, ["NV"]] = ""
+    isic_df.loc[isic_df["AKIEC"] == 0, ["AKIEC"]] = ""
+    isic_df.loc[isic_df["BKL"] == 0, ["BKL"]] = ""
+    isic_df.loc[isic_df["BCC"] == 0, ["BCC"]] = ""
+    isic_df.loc[isic_df["DF"] == 0, ["DF"]] = ""
+    isic_df.loc[isic_df["VASC"] == 0, ["VASC"]] = ""
+
+    encoder = LabelEncoder()
+    isic_df["label"] = isic_df[["MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC"]].apply(lambda x: "".join(x), axis=1)
+    isic_df["label_encoded"] = encoder.fit_transform(isic_df["label"])
+
+    isic_df["mask_path"] = isic_df["image_id"].apply(lambda x: f"../ISIC_2018/masks/{x}.png")
+    return isic_df
 
 
 def get_isic_2018_dataloaders(isic_df, batch_size=8, shuffle=True):
