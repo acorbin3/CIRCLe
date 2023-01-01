@@ -58,13 +58,18 @@ def download_isic_2018_datasets():
     image_count = len(list(Path("../ISIC_2018").glob("*.jpg")))
     if image_count == 0:
         images_url = "https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip"
+        print("Downloading isic2018 images")
         download_and_extract(images_url, "../ISIC_2018/")
+        print("Downloading isic2018 images. Complete!")
 
     image_count = len(list(Path("../ISIC_2018/masks").glob("*.png")))
     if image_count == 0:
         masks_url = "https://isic2018task3masks.s3.amazonaws.com/isic_2018_mask_results1_2022_12_29.zip"
+        print("Downloading isic2018 masks")
         download_and_extract(masks_url, "../ISIC_2018/")
+        print("Downloading isic2018 masks. Complete!")
 
+        print("Resizing masks")
         # the masks need to be resized to (600,450) to match the original image sizes.
         target_size = (600, 450)
         mask_directory = "../ISIC_2018/masks"
@@ -82,6 +87,7 @@ def download_isic_2018_datasets():
 
             # Save the resized image
             im_resized.save(os.path.join(mask_directory, file))
+        print("Resizing masks. Complete!")
 
     gt_csv_count = Path("../ISIC_2018_GT").glob("*.csv")
     if gt_csv_count == 0:
@@ -104,6 +110,7 @@ def get_cached_dataframe():
     for the ISIC 2018 Task 3 dataset
     """
 
+    print("Creating dataframe")
     orig_images = []
     masks_images = []
 
@@ -158,6 +165,7 @@ def get_cached_dataframe():
     isic_df["label_encoded"] = encoder.fit_transform(isic_df["label"])
 
     isic_df["mask_path"] = isic_df["image_id"].apply(lambda x: f"../ISIC_2018/masks/{x}.png")
+    print("Creating dataframe. Complete!")
     return isic_df
 
 
