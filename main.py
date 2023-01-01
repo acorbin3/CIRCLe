@@ -4,6 +4,8 @@ import argparse
 import os, importlib
 from tqdm import tqdm
 import numpy as np
+
+from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
 from organize_data.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
 
@@ -27,6 +29,8 @@ flags = parser.parse_args()
 
 if flags.dataset == 'FitzPatrick17k':
     flags.num_classes = 114
+elif flags.dataset == "isic2018":
+    flags.num_classes = 7  # ['NV', 'BKL', 'MEL', 'AKIEC', 'BCC', 'VASC', 'DF']
 
 # print setup
 print('Flags:')
@@ -45,13 +49,18 @@ torch.backends.cudnn.deterministic = True
 
 
 # Data loader.
-train_loader, val_loader, _ = get_fitz_dataloaders(root=flags.data_dir,
-                                                   holdout_mode='random_holdout',
-                                                   batch_size=flags.batch_size,
-                                                   shuffle=False,
-                                                   partial_skin_types=[],
-                                                   partial_ratio=1.0
-                                                   )
+if flags.dataset == "FitzPatrick17k":
+    train_loader, val_loader, _ = get_fitz_dataloaders(root=flags.data_dir,
+                                                       holdout_mode='random_holdout',
+                                                       batch_size=flags.batch_size,
+                                                       shuffle=False,
+                                                       partial_skin_types=[],
+                                                       partial_ratio=1.0
+                                                       )
+elif flags.dataset == "isic2018":
+    download_isic_2018_datasets()
+    isic_df = get_cached_dataframe()
+    train_loader, test_loader, val_loader = get_isic_2018_dataloaders(isic_df)
 
 # load models
 model = importlib.import_module('models.' + flags.model) \
