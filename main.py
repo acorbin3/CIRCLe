@@ -60,7 +60,7 @@ if flags.dataset == "FitzPatrick17k":
 elif flags.dataset == "isic2018":
     download_isic_2018_datasets()
     isic_df = get_cached_dataframe()
-    train_loader, test_loader, val_loader = get_isic_2018_dataloaders(isic_df)
+    train_loader, val_loader, test_loader = get_isic_2018_dataloaders(isic_df)
 
 # load models
 model = importlib.import_module('models.' + flags.model) \
