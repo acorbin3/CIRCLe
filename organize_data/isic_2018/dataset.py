@@ -43,8 +43,11 @@ class ISIC2018SkinDataset():
         fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type']
         if self.transform:
             image = self.transform(image)
+            #TODO - figure out what to do for transforming mask the same as the image
+            #mask = self.transform(mask)
 
-        return image, mask, label, fitzpatrick
+        #return image, mask, label, fitzpatrick
+        return image, label, fitzpatrick
 
 
 def download_isic_2018_datasets():
@@ -68,7 +71,7 @@ def download_isic_2018_datasets():
     if image_count == 0:
         masks_url = "https://isic2018task3masks.s3.amazonaws.com/isic_2018_mask_results1_2022_12_29.zip"
         print("Downloading isic2018 masks")
-        download_and_extract(masks_url, "ISIC_2018/masks")
+        download_and_extract(masks_url, "ISIC_2018/masks", create_root_dir=False)
         print("Downloading isic2018 masks. Complete!")
 
         print("Resizing masks")
@@ -102,12 +105,15 @@ def download_isic_2018_datasets():
         print("isic 2018 ground truth classification data already downlaoded")
 
 
-def download_and_extract(images_url, directory):
+def download_and_extract(images_url, directory, create_root_dir=True):
     response = requests.get(images_url)
     open("temp.zip", "wb").write(response.content)
     # Unzip the file to the destination directory
     with zipfile.ZipFile("temp.zip", "r") as zip_ref:
-        zip_ref.extractall(directory)
+        if create_root_dir:
+            zip_ref.extractall(directory)
+        else:
+            zip_ref.extractall(directory, pwd=None, members=zip_ref.infolist())
     os.remove("temp.zip")
 
 
@@ -165,7 +171,9 @@ def get_cached_dataframe():
     isic_df["label"] = isic_df[["MEL", "NV", "BCC", "AKIEC", "BKL", "DF", "VASC"]].apply(lambda x: "".join(x), axis=1)
     isic_df["label_encoded"] = encoder.fit_transform(isic_df["label"])
 
-    isic_df["mask_path"] = isic_df["image_id"].apply(lambda x: f"../ISIC_2018/masks/{x}.png")
+    mask_directory = str(list(Path("ISIC_2018/masks").glob("**/*.png"))[0].parent)
+
+    isic_df["mask_path"] = isic_df["image_id"].apply(lambda x: f"{mask_directory}/{x}.png")
     print("Creating dataframe. Complete!")
     return isic_df
 
