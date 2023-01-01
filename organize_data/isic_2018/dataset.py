@@ -55,24 +55,26 @@ def download_isic_2018_datasets():
     """
     # check to see if we already have downloaded the zip files and extracted the zip files
 
-    image_count = len(list(Path("../ISIC_2018").glob("*.jpg")))
+    image_count = len(list(Path("ISIC_2018").glob("**/*.jpg")))
     if image_count == 0:
         images_url = "https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_Input.zip"
         print("Downloading isic2018 images")
-        download_and_extract(images_url, "../ISIC_2018/")
+        download_and_extract(images_url, "ISIC_2018/")
         print("Downloading isic2018 images. Complete!")
+    else:
+        print("isic2018 images already downloaded")
 
-    image_count = len(list(Path("../ISIC_2018/masks").glob("*.png")))
+    image_count = len(list(Path("ISIC_2018/masks").glob("**/*.png")))
     if image_count == 0:
         masks_url = "https://isic2018task3masks.s3.amazonaws.com/isic_2018_mask_results1_2022_12_29.zip"
         print("Downloading isic2018 masks")
-        download_and_extract(masks_url, "../ISIC_2018/")
+        download_and_extract(masks_url, "ISIC_2018/masks")
         print("Downloading isic2018 masks. Complete!")
 
         print("Resizing masks")
         # the masks need to be resized to (600,450) to match the original image sizes.
         target_size = (600, 450)
-        mask_directory = "../ISIC_2018/masks"
+        mask_directory = "ISIC_2018/masks"
         # Iterate over all the files in the directory
         for file in os.listdir(mask_directory):
             # Skip files that are not images
@@ -88,11 +90,16 @@ def download_isic_2018_datasets():
             # Save the resized image
             im_resized.save(os.path.join(mask_directory, file))
         print("Resizing masks. Complete!")
+    else:
+        print("isic 2018 masks already downladed")
 
-    gt_csv_count = Path("../ISIC_2018_GT").glob("*.csv")
+    gt_csv_count = len(list(Path("ISIC_2018_GT").glob("*.csv")))
     if gt_csv_count == 0:
+        print("Donloading isic 2018 ground truth classification data")
         ground_truth_url = "https://isic-challenge-data.s3.amazonaws.com/2018/ISIC2018_Task3_Training_GroundTruth.zip"
-        download_and_extract(ground_truth_url, "../ISIC_2018_GT/")
+        download_and_extract(ground_truth_url, "ISIC_2018_GT/")
+    else:
+        print("isic 2018 ground truth classification data already downlaoded")
 
 
 def download_and_extract(images_url, directory):
@@ -107,7 +114,8 @@ def download_and_extract(images_url, directory):
 def get_cached_dataframe():
     """
     This function is supposed to read a saved version of a dataframe that has Fitzpatrick skin type data pre-calculated
-    for the ISIC 2018 Task 3 dataset
+    for the ISIC 2018 Task 3 dataset. The ground truth is already embedded into this dataframe and doesnt beed to be
+    extracted from ISIC2018_Task3_Training_GroundTruth.zip
     """
 
     print("Creating dataframe")
@@ -115,31 +123,24 @@ def get_cached_dataframe():
     masks_images = []
 
     # get the file names of the images
-    for file in Path("../ISIC_2018").glob("**/*.jpg"):
+    for file in Path("ISIC_2018").glob("**/*.jpg"):
         orig_images.append(file)
 
         # no masks for Task 3, for now use empty strings
         masks_images = [""] * len(orig_images)
 
-    # get the ground truth classificaiton data
-    dfs = []
-    for f in Path("../ISIC_2018_GT").glob("**/*.csv"):
-        if "ISIC" in str(f):
-            print(f)
-            dfs.append(pd.read_csv(f))
 
     # Creating the main dataframe
+    print("\t Looking for cached dataframe")
     isic_df = pd.DataFrame()
     for file in Path(".").glob("**/*.csv"):
-        print(file)
         if "isic_2018" in file.name and "saved_data" in file.name:
+            print("\t\t",file)
             isic_df = pd.read_csv(file)
             isic_df = isic_df.fillna("")
     isic_df["image_path"] = orig_images
     isic_df["mask_path"] = masks_images
     isic_df["image_id"] = isic_df["image_path"].apply(lambda x: x.name.split('.')[0])
-    dfs[0].rename(columns={"image": "image_id"}, inplace=True)
-    isic_df = pd.merge(isic_df, dfs[0], on="image_id")
 
     # Clean up columns for further process
     # replaces 1's with column name
