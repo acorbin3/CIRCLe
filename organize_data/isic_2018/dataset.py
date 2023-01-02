@@ -44,12 +44,12 @@ class ISIC2018SkinDataset():
         label = self.df.loc[self.df.index[idx], 'label_encoded']
         fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type']
         if self.transform:
-            image = self.transform(image, mask)
+            image, mask = self.transform(image, mask)
             #TODO - figure out what to do for transforming mask the same as the image
             #mask = self.transform(mask)
 
-        #return image, mask, label, fitzpatrick
-        return image, label, fitzpatrick
+        return image, mask, label, fitzpatrick
+        #return image, label, fitzpatrick
 
 
 def download_isic_2018_datasets():
@@ -180,7 +180,7 @@ def get_cached_dataframe():
     return isic_df
 
 
-def get_isic_2018_dataloaders(isic_df, batch_size=8, shuffle=True):
+def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     all_domains = [1, 2, 3, 4, 5, 6]
 
     # group index based on FSK. Split into 80/20 for training, test. then 50/50 for test and validation
