@@ -108,14 +108,24 @@ for epoch in range(flags.epochs):
     valcorrectMeter = AverageMeter()
     model.eval()
     with torch.no_grad():
-        for x, y, d in tqdm(val_loader, ncols=75, leave=False):
-            x, y, d = x.to(device), y.to(device), d.to(device)
-            loss, reg, correct = model(x, y)
+        if flags.dataset == "FitzPatrick17k":
+            for x, y, d in tqdm(val_loader, ncols=75, leave=False):
+                x, y, d = x.to(device), y.to(device), d.to(device)
+                loss, reg, correct = model(x, y)
 
-            vallossMeter.update(loss.detach().item(), x.shape[0])
-            valregMeter.update(reg.detach().item(), x.shape[0])
-            valcorrectMeter.update(correct.detach().item(), x.shape[0])
-            del loss, reg, correct
+                vallossMeter.update(loss.detach().item(), x.shape[0])
+                valregMeter.update(reg.detach().item(), x.shape[0])
+                valcorrectMeter.update(correct.detach().item(), x.shape[0])
+                del loss, reg, correct
+        elif flags.dataset == "isic2018":
+            for x, y, d, mask in tqdm(val_loader, ncols=75, leave=False):
+                x, y, d, mask = x.to(device), y.to(device), d.to(device), mask.to(device)
+                loss, reg, correct = model(x, y, input_mask=mask)
+
+                vallossMeter.update(loss.detach().item(), x.shape[0])
+                valregMeter.update(reg.detach().item(), x.shape[0])
+                valcorrectMeter.update(correct.detach().item(), x.shape[0])
+                del loss, reg, correct
     print('>>> Val: Loss ', vallossMeter, ', Reg ', valregMeter, ', Acc ', valcorrectMeter)
 
     if valcorrectMeter.float() > best_val_acc:
