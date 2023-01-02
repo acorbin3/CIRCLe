@@ -17,9 +17,9 @@ class Model(BaseModel):
         super(Model, self).__init__(hidden_dim, base)
 
         self.out_layer = nn.Linear(hidden_dim, config.num_classes)
-        self.trans = load_stargan(
-            config.gan_path + 'stargan_last-G.ckpt')
-        self.trans.eval()
+        #self.trans = load_stargan(
+        #    config.gan_path + 'stargan_last-G.ckpt')
+        #self.trans.eval()
 
         self.alpha = config.alpha
 
@@ -60,9 +60,10 @@ class Model(BaseModel):
                     d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
                     d_new_onehot = d.new_zeros([d.shape[0], 6])
                     d_new_onehot.scatter_(1, d_new[:, None], 1)
-
+                    #TODO - update to new image transformer
+                    x_new = x
                     # New generated image
-                    x_new = self.trans(x, d_onehot, d_new_onehot)
+                    #x_new = self.trans(x, d_onehot, d_new_onehot)
 
                     # x_new = self.custom_transformer(x)
 
