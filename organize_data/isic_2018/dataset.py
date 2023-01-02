@@ -48,7 +48,7 @@ class ISIC2018SkinDataset():
             #TODO - figure out what to do for transforming mask the same as the image
             #mask = self.transform(mask)
 
-        return image, mask, label, fitzpatrick
+        return image, label, fitzpatrick, mask
         #return image, label, fitzpatrick
 
 
