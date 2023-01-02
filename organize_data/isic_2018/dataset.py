@@ -42,7 +42,7 @@ class ISIC2018SkinDataset():
         mask = Image.open(mask_name)
 
         label = self.df.loc[self.df.index[idx], 'label_encoded']
-        fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type']
+        fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type'] - 1 # This is to have a range starting at zero
         if self.transform:
             image, mask = self.transform(image, mask)
             #TODO - figure out what to do for transforming mask the same as the image
