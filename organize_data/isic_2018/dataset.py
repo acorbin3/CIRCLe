@@ -43,7 +43,7 @@ class ISIC2018SkinDataset():
         label = self.df.loc[self.df.index[idx], 'label_encoded']
         fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type']
         if self.transform:
-            image = self.transform(image)
+            image = self.transform(image, mask)
             #TODO - figure out what to do for transforming mask the same as the image
             #mask = self.transform(mask)
 
