@@ -5,7 +5,6 @@ from pathlib import Path
 
 import torch
 from PIL import Image, ImageFile
-from torchvision import transforms
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
@@ -14,6 +13,8 @@ import requests
 import zipfile
 import os
 from sklearn.preprocessing import LabelEncoder
+
+from organize_data.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize
 
 
 class ISIC2018SkinDataset():
@@ -237,32 +238,30 @@ def get_isic_2018_dataloaders(isic_df, batch_size=8, shuffle=True):
 
     transformed_train = ISIC2018SkinDataset(
         df=train,
-        transform=transforms.Compose([
-            transforms.RandomRotation(degrees=15),
-            transforms.RandomHorizontalFlip(),
-            transforms.Resize(size=(128, 128)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406],
-                                 [0.229, 0.224, 0.225])
+        transform=Compose([
+            RandomRotation(degrees=15),
+            RandomHorizontalFlip(),
+            Resize(size=(128, 128)),
+            PILToTensor(),
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
     transformed_val = ISIC2018SkinDataset(
         df=val,
-        transform=transforms.Compose([
-            transforms.Resize(size=(128, 128)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transform=Compose([
+            Resize(size=(128, 128)),
+            PILToTensor(),
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
     transformed_test = ISIC2018SkinDataset(
         df=test,
-        transform=transforms.Compose([
-            transforms.ToPILImage(),
-            transforms.Resize(size=(128, 128)),
-            transforms.ToTensor(),
-            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+        transform=Compose([
+            Resize(size=(128, 128)),
+            PILToTensor(),
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
