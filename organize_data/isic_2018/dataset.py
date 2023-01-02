@@ -14,7 +14,8 @@ import zipfile
 import os
 from sklearn.preprocessing import LabelEncoder
 
-from organize_data.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize
+from organize_data.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize, \
+    ConvertImageDtype
 
 
 class ISIC2018SkinDataset():
@@ -243,6 +244,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=8, shuffle=True):
             RandomHorizontalFlip(),
             Resize(size=(128, 128)),
             PILToTensor(),
+            ConvertImageDtype(torch.float),
             Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
@@ -252,6 +254,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=8, shuffle=True):
         transform=Compose([
             Resize(size=(128, 128)),
             PILToTensor(),
+            ConvertImageDtype(torch.float),
             Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
@@ -261,6 +264,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=8, shuffle=True):
         transform=Compose([
             Resize(size=(128, 128)),
             PILToTensor(),
+            ConvertImageDtype(torch.float),
             Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
