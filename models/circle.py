@@ -3,6 +3,7 @@ from torch import nn
 import torch.nn.functional as F
 from models.base import BaseModel
 from models.stargan import load_stargan
+from skin_transformer.skin_transformer import transform_image
 
 
 def debug_it(name, it, print_object=False):
@@ -57,18 +58,18 @@ class Model(BaseModel):
                     d_onehot = d.new_zeros([d.shape[0], 6])
                     d_onehot.scatter_(1, d[:, None], 1)
 
-                    # generate random class to pick from
-                    d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
-                    d_new_onehot = d.new_zeros([d.shape[0], 6])
-                    d_new_onehot.scatter_(1, d_new[:, None], 1)
+                    # generate random fitzpatrick skin type class to transform
+                    #d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
+                    #d_new_onehot = d.new_zeros([d.shape[0], 6])
+                    #d_new_onehot.scatter_(1, d_new[:, None], 1)
                     # TODO - update to new image transformer
-                    x_new = input_image
+                    x_new = transform_image(input_image, input_mask)
+                    #x_new = input_image
                     # New generated image
                     # x_new = self.trans(x, d_onehot, d_new_onehot)
 
                     # x_new = self.custom_transformer(x)
 
-                    # TODO - figure out dimentions
                     if debugging: debug_it("x_new", x_new, False)
 
                     # print(x_new)
