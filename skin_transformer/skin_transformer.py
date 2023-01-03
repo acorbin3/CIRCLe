@@ -12,11 +12,11 @@ def safe_convert(x, new_dtype):
 
 def transform_image(image, mask, desired_fst=None, verbose=False):
     """
-    1. Compute ITA of current image and retrieve Fitzpatrick skin type​
-    2. Select random FST that’s different​
-    3. Select random ITA number within range of selected FST​
-    4. Compute difference  original ITA – new desired ITA​
-    5. Adjusted b = old b value + (difference * .5)​
+    1. Compute ITA of current image and retrieve Fitzpatrick skin type
+    2. Select random FST that’s different
+    3. Select random ITA number within range of selected FST
+    4. Compute difference  original ITA – new desired ITA
+    5. Adjusted b = old b value + (difference * .5)
     6. Adjusted L = old L value + (difference * .12)
     :image - rgb image
     """
