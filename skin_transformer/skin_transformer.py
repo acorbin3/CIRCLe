@@ -5,6 +5,7 @@ from skin_transformer.fitzpatrick_utilities import Fitzpatrick_Skin_Type, random
 from PIL import ImageOps, Image
 import cv2
 
+
 def safe_convert(x, new_dtype):
     info = np.iinfo(new_dtype)
     return x.clip(info.min, info.max).astype(new_dtype)
@@ -21,6 +22,8 @@ def transform_image(image, mask, desired_fst=None, verbose=False):
     :image - rgb image
     """
 
+    image.save("test_01_entering_transform.png")
+    if verbose: print(f"image type {type(image)}")
     image_ita = get_cropped_center_ita(image)
     if verbose: print(f"ITA {image_ita}")
 
@@ -48,8 +51,20 @@ def transform_image(image, mask, desired_fst=None, verbose=False):
     # convert base image to NumPy array
     image_array = np.array(image)
 
+    if image_array.shape[2] == 3:
+        image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+        if verbose: print('The image is in the BGR color space')
+    else:
+        if verbose: print('The image is in the RGB color space')
+
+    if verbose:
+        print(f"image_array: {image_array.dtype}")
+        cv2.imwrite("test_02_before_lab.jpg", image_array)
+
     # Convert the base image NumPy array to a LAB color space
     lab_image = cv2.cvtColor(image_array, cv2.COLOR_RGB2LAB)
+    if verbose:
+        cv2.imwrite("test_03_after_lab.jpg", lab_image)
 
     # Create the modifiers
     if random_fst.value < fst.value:
