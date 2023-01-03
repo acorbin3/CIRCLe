@@ -6,3 +6,4 @@ tensorflow==2.9.2
 torch==1.12.1
 torchvision==0.13.1
 tqdm==4.64.1
+derm-ita>=0.0.8
