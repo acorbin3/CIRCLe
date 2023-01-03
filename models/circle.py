@@ -4,6 +4,7 @@ import torch.nn.functional as F
 from models.base import BaseModel
 from models.stargan import load_stargan
 from skin_transformer.skin_transformer import transform_image
+import numpy as np
 
 
 def debug_it(name, it, print_object=False):
@@ -26,8 +27,19 @@ class Model(BaseModel):
 
         self.use_reg = use_reg
 
-    def custom_transformer(img):
-        pass
+    def custom_transformer(self, input_image_batches, input_mask_batches):
+        """
+        Method wrapping the skin transformer since that method doesnt support batches.
+        @param input_image_batches:
+        @param input_mask_batches:
+        @return: array of modified images
+        """
+        transformed_image_batches = []
+        for batch in range(len(input_image_batches)):
+            input_image = input_image_batches[batch]
+            input_mask = input_mask_batches[batch]
+            transformed_image_batches.append(transform_image(input_image, input_mask))
+        return transformed_image_batches
 
     def forward(self, input_image, expected_classification, d=None, input_mask=None):
         debugging = False
@@ -59,12 +71,13 @@ class Model(BaseModel):
                     d_onehot.scatter_(1, d[:, None], 1)
 
                     # generate random fitzpatrick skin type class to transform
-                    #d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
-                    #d_new_onehot = d.new_zeros([d.shape[0], 6])
-                    #d_new_onehot.scatter_(1, d_new[:, None], 1)
+                    # d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
+                    # d_new_onehot = d.new_zeros([d.shape[0], 6])
+                    # d_new_onehot.scatter_(1, d_new[:, None], 1)
                     # TODO - update to new image transformer
-                    x_new = transform_image(input_image, input_mask)
-                    #x_new = input_image
+                    x_new = torch.cat(self.custom_transformer(np.array_split(input_image, len(input_image)),
+                                                              np.array_split(input_mask, len(input_mask))))
+                    # x_new = input_image
                     # New generated image
                     # x_new = self.trans(x, d_onehot, d_new_onehot)
 
