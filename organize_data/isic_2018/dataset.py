@@ -17,6 +17,8 @@ from sklearn.preprocessing import LabelEncoder
 from organize_data.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize, \
     ConvertImageDtype
 
+import torchvision.transforms as transforms
+
 
 class ISIC2018SkinDataset():
     def __init__(self, df, transform=None):
@@ -37,19 +39,29 @@ class ISIC2018SkinDataset():
             idx = idx.tolist()
         img_name = self.df.loc[self.df.index[idx], 'image_path']
         image = Image.open(img_name)
+        # image.save("test_image_before_transform.png")
 
         mask_name = self.df.loc[self.df.index[idx], 'mask_path']
         mask = Image.open(mask_name)
+        mask.save("test_mask_before_transform.png")
 
         label = self.df.loc[self.df.index[idx], 'label_encoded']
-        fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type'] - 1 # This is to have a range starting at zero
+        fitzpatrick = self.df.loc[
+                          self.df.index[idx], 'fizpatrick_skin_type'] - 1  # This is to have a range starting at zero
         if self.transform:
             image, mask = self.transform(image, mask)
-            #TODO - figure out what to do for transforming mask the same as the image
-            #mask = self.transform(mask)
+
+        # print(f"dataset fetch image: {image.shape} {image.dtype}")
+        to_pil = transforms.ToPILImage()
+
+        # pil_image = to_pil(image.type(torch.float32))
+        # pil_image.save("test_fetch_image.png")
+
+        pil_image = to_pil(mask.type(torch.float32))
+        pil_image.save("test_after_mask_transform.png")
 
         return image, label, fitzpatrick, mask
-        #return image, label, fitzpatrick
+        # return image, label, fitzpatrick
 
 
 def download_isic_2018_datasets():
@@ -137,13 +149,12 @@ def get_cached_dataframe():
         # no masks for Task 3, for now use empty strings
         masks_images = [""] * len(orig_images)
 
-
     # Creating the main dataframe
     print("\t Looking for cached dataframe")
     isic_df = pd.DataFrame()
     for file in Path(".").glob("**/*.csv"):
         if "isic_2018" in file.name and "saved_data" in file.name:
-            print("\t\t",file)
+            print("\t\t", file)
             isic_df = pd.read_csv(file)
             isic_df = isic_df.fillna("")
     isic_df["image_path"] = orig_images
@@ -240,12 +251,12 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     transformed_train = ISIC2018SkinDataset(
         df=train,
         transform=Compose([
-            RandomRotation(degrees=15),
-            RandomHorizontalFlip(),
+            # RandomRotation(degrees=15),
+            # RandomHorizontalFlip(),
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
         ])
     )
 
@@ -255,7 +266,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
         ])
     )
 
@@ -265,7 +276,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
         ])
     )
 
