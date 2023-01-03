@@ -5,6 +5,10 @@ from models.base import BaseModel
 from models.stargan import load_stargan
 from skin_transformer.skin_transformer import transform_image
 import numpy as np
+import torchvision.transforms as transforms
+from PIL import Image
+from skimage import util
+import cv2
 
 
 def debug_it(name, it, print_object=False):
@@ -37,8 +41,35 @@ class Model(BaseModel):
         transformed_image_batches = []
         for batch in range(len(input_image_batches)):
             input_image = input_image_batches[batch]
+            input_image = input_image[0]
+            # print(f"input_image: {input_image.dtype}")
+            # print(f"input_image: {input_image.shape}")
+            to_pil = transforms.ToPILImage()
+            input_image = to_pil(input_image.type(torch.float32))
+
+            # input_image.save("test_after_batch_conversion1.png")
+
+            # image_array = np.array(input_image)
+            # rgb_image_array = cv2.cvtColor(image_array, cv2.COLOR_BGR2RGB)
+            # input_image2 = Image.fromarray(rgb_image_array)
+            # input_image2.save("test_after_batch_conversion2.png")
+
             input_mask = input_mask_batches[batch]
-            transformed_image_batches.append(transform_image(input_image, input_mask))
+            input_mask = input_mask[0]
+            input_mask = to_pil(input_mask.type(torch.float32))
+            # input_mask.save("test_batch_mask.png")
+
+            # TODO probably need to convert back to tensor and back to uint64 type
+            transformed_image = transform_image(input_image, input_mask, verbose=False)
+            # print(f"transformed_image: {transformed_image.shape}")
+            pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
+            to_tensor = transforms.ToTensor()
+            transformed_image_tensor = to_tensor(pil_image)
+            transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
+            # print(f"transformed_image_tensor: {transformed_image_tensor.shape}")
+            # print(f"transformed_image_tensor: {transformed_image_tensor.dtype}\n")
+            transformed_image_batches.append(transformed_image_tensor)
+
         return transformed_image_batches
 
     def forward(self, input_image, expected_classification, d=None, input_mask=None):
@@ -67,23 +98,30 @@ class Model(BaseModel):
             if self.use_reg:
                 with torch.no_grad():
                     # encode fitzpatrick label of current image
-                    d_onehot = d.new_zeros([d.shape[0], 6])
-                    d_onehot.scatter_(1, d[:, None], 1)
+                    # d_onehot = d.new_zeros([d.shape[0], 6])
+                    # d_onehot.scatter_(1, d[:, None], 1)
 
                     # generate random fitzpatrick skin type class to transform
                     # d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
                     # d_new_onehot = d.new_zeros([d.shape[0], 6])
                     # d_new_onehot.scatter_(1, d_new[:, None], 1)
                     # TODO - update to new image transformer
-                    x_new = torch.cat(self.custom_transformer(np.array_split(input_image, len(input_image)),
-                                                              np.array_split(input_mask, len(input_mask))))
+                    # print(f"input_image.shape {input_image.shape}")
+                    if True: debug_it("input_image", input_image, False)
+                    output_skin_transformer = self.custom_transformer(np.array_split(input_image, len(input_image)),
+                                                                      np.array_split(input_mask, len(input_mask)))
+                    # print(f"before np.array output_skin_transformer.shape {output_skin_transformer[0].shape}")
+                    # output_skin_transformer = np.array(output_skin_transformer)
+                    # print(f"after output_skin_transformer.shape {output_skin_transformer[0].shape}")
+                    x_new = torch.stack(output_skin_transformer)
+
                     # x_new = input_image
                     # New generated image
                     # x_new = self.trans(x, d_onehot, d_new_onehot)
 
                     # x_new = self.custom_transformer(x)
 
-                    if debugging: debug_it("x_new", x_new, False)
+                    if True: debug_it("x_new", x_new, False)
 
                     # print(x_new)
 
