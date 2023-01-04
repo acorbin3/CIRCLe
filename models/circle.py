@@ -10,6 +10,7 @@ from PIL import Image
 from skimage import util
 import cv2
 from sklearn.metrics import precision_score, recall_score
+from sklearn.metrics import confusion_matrix
 
 
 def debug_it(name, it, print_object=False):
@@ -95,9 +96,13 @@ class Model(BaseModel):
         # Calculate precision and recall
         predictions = logits.detach().cpu().numpy()
         labels = expected_classification.cpu().numpy()
-        precision = precision_score(labels, predictions)
-        recall = recall_score(labels, predictions)
+        # Compute the micro-average precision and recall
+        cm = confusion_matrix(labels, predictions)
+        precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
+        recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
+        print(f"Micro-average Precision: {precision:.4f}")
+        print(f"Micro-average Recall: {recall:.4f}")
         # empty regularization
         reg = loss.new_zeros([1])
         if debugging: debug_it("reg", reg, True)
