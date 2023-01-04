@@ -24,6 +24,9 @@ class Model(BaseModel):
     def __init__(self, config, hidden_dim=256, base='vgg16', use_reg=True):
         super(Model, self).__init__(hidden_dim, base)
 
+        #self.fc1 = nn.Linear(hidden_dim, hidden_dim)
+        #self.dropout = nn.Dropout(p=0.5)
+
         self.out_layer = nn.Linear(hidden_dim, config.num_classes)
         # self.trans = load_stargan(
         #    config.gan_path + 'stargan_last-G.ckpt')
@@ -78,6 +81,11 @@ class Model(BaseModel):
         debugging = False
         # run the input into the base model
         z = F.relu(self.base(input_image))
+
+        #TODO - evaluate if we should add these extra 2 layers to help prevent overfitting to the traning dataset
+        #z = self.fc1(z)
+        #z = self.dropout(z)
+
         if debugging: print("################")
         if debugging: debug_it("orig_z", z)
         # run the output of the base into the output layer to determine the class
