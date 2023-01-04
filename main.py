@@ -118,9 +118,9 @@ for epoch in range(flags.epochs):
                 valcorrectMeter.update(correct.detach().item(), x.shape[0])
                 del loss, reg, correct
         elif flags.dataset == "isic2018":
-            for x, y, d, mask in tqdm(val_loader, ncols=75, leave=False):
-                x, y, d, mask = x.to(device), y.to(device), d.to(device), mask.to(device)
-                loss, reg, correct = model(x, y, input_mask=mask)
+            for x, y, d, mask, x_ita in tqdm(val_loader, ncols=75, leave=False):
+                x, y, d, mask, x_ita = x.to(device), y.to(device), d.to(device), mask.to(device), x_ita.to(device)
+                loss, reg, correct = model(x, y, input_mask=mask, input_image_ita=x_ita)
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])
