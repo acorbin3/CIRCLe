@@ -14,7 +14,7 @@ from sklearn.metrics import confusion_matrix
 
 
 def debug_it(name, it, print_object=False):
-    print(f"{name}.shape : {it.shape} {name}.dim():{it.dim()} {name}.size():{it.size()} {name}.dtype:{it.dtype}")
+    print(f"{name}.shape : {it.shape} {name}.dtype:{it.dtype}")
     if print_object:
         print(it)
     print()
@@ -65,12 +65,12 @@ class Model(BaseModel):
 
             transformed_image = transform_image(input_image, input_mask, image_ita=input_image_ita, verbose=False)
             # print(f"transformed_image: {transformed_image.shape}")
-            #pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
+            # pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
             to_tensor = transforms.ToTensor()
             transformed_image_tensor = to_tensor(transformed_image)
             # todo - this is a hack for cuda, look a ways to fix this
             transformed_image_tensor = transformed_image_tensor.to("cuda")
-            #transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
+            # transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
             # print(f"transformed_image_tensor: {transformed_image_tensor.shape}")
             # print(f"transformed_image_tensor: {transformed_image_tensor.dtype}\n")
             transformed_image_batches.append(transformed_image_tensor)
@@ -90,6 +90,9 @@ class Model(BaseModel):
         if debugging: debug_it("orig_z", z)
         # run the output of the base into the output layer to determine the class
         logits = self.out_layer(z)
+        # logits basically returns a list of probilities of each class.
+        # we only care about the highest probility thus we would do this "torch.argmax(logits, 1)"
+        # to assocate that the model's highest probility will be the "predicted" class
         if debugging: debug_it("logits", logits, True)
         if debugging: debug_it("y", expected_classification, True)
 
@@ -104,13 +107,13 @@ class Model(BaseModel):
         # Calculate precision and recall
         true_labels = []
         predicted_labels = []
-        predictions = logits.detach().cpu().numpy().flatten()
-        labels = expected_classification.cpu().numpy().flatten()
+        predictions = torch.argmax(logits, 1).cpu().numpy()
+        labels = expected_classification.cpu().numpy()
+
+        if debugging: debug_it("predictions", predictions, True)
+        if debugging: debug_it("labels", labels, True)
         # Compute the micro-average precision and recall
-        # Append the predictions and labels to the lists
-        true_labels.extend(labels)
-        predicted_labels.extend(predictions)
-        cm = confusion_matrix(true_labels, predicted_labels)
+        cm = confusion_matrix(labels, predictions)
         precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
         recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 

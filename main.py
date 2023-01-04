@@ -114,8 +114,8 @@ for epoch in range(flags.epochs):
         lossMeter.update(loss.detach().item(), data[0].shape[0])
         regMeter.update(reg.detach().item(), data[0].shape[0])
         correctMeter.update(correct.detach().item(), data[0].shape[0])
-        precision_meter.update(precision.detach().item(), x.shape[0])
-        recall_meter.update(recall.detach().item(), x.shape[0])
+        precision_meter.update(precision, data.shape[0])
+        recall_meter.update(recall, data.shape[0])
         del loss, reg, correct, precision, recall
     print(f'>>> Training: Loss {lossMeter}, Reg {regMeter}, Acc {correctMeter}, precision: {precision_meter}, recall{recall_meter}')
 
@@ -143,8 +143,8 @@ for epoch in range(flags.epochs):
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])
                 valcorrectMeter.update(correct.detach().item(), x.shape[0])
-                val_precision_meter.update(precision.detach().item(), x.shape[0])
-                val_recall_meter.update(recall.detach().item(), x.shape[0])
+                val_precision_meter.update(precision, x.shape[0])
+                val_recall_meter.update(recall, x.shape[0])
 
                 del loss, reg, correct, precision, recall
     print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valcorrectMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
