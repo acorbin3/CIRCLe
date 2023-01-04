@@ -117,8 +117,6 @@ class Model(BaseModel):
         precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
         recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
-        print(f"Micro-average Precision: {precision:.4f}")
-        print(f"Micro-average Recall: {recall:.4f}")
         # empty regularization
         reg = loss.new_zeros([1])
         if debugging: debug_it("reg", reg, True)
