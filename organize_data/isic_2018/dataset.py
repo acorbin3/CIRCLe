@@ -43,24 +43,24 @@ class ISIC2018SkinDataset():
 
         mask_name = self.df.loc[self.df.index[idx], 'mask_path']
         mask = Image.open(mask_name)
-        mask.save("test_mask_before_transform.png")
+        #mask.save("test_mask_before_transform.png")
 
         label = self.df.loc[self.df.index[idx], 'label_encoded']
-        fitzpatrick = self.df.loc[
-                          self.df.index[idx], 'fizpatrick_skin_type'] - 1  # This is to have a range starting at zero
+        image_ita = self.df.loc[self.df.index[idx], 'ita']
+        fitzpatrick = self.df.loc[self.df.index[idx], 'fizpatrick_skin_type'] - 1  # This is to have a range starting at zero
         if self.transform:
             image, mask = self.transform(image, mask)
 
         # print(f"dataset fetch image: {image.shape} {image.dtype}")
-        to_pil = transforms.ToPILImage()
+        #to_pil = transforms.ToPILImage()
 
         # pil_image = to_pil(image.type(torch.float32))
         # pil_image.save("test_fetch_image.png")
 
-        pil_image = to_pil(mask.type(torch.float32))
-        pil_image.save("test_after_mask_transform.png")
+        #pil_image = to_pil(mask.type(torch.float32))
+        #pil_image.save("test_after_mask_transform.png")
 
-        return image, label, fitzpatrick, mask
+        return image, label, fitzpatrick, mask, image_ita
         # return image, label, fitzpatrick
 
 
