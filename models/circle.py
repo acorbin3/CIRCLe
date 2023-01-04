@@ -94,10 +94,15 @@ class Model(BaseModel):
         if debugging: debug_it("correct", correct, True)
 
         # Calculate precision and recall
-        predictions = logits.detach().cpu().numpy()
-        labels = expected_classification.cpu().numpy()
+        true_labels = []
+        predicted_labels = []
+        predictions = logits.detach().cpu().numpy().flatten()
+        labels = expected_classification.cpu().numpy().flatten()
         # Compute the micro-average precision and recall
-        cm = confusion_matrix(labels, predictions)
+        # Append the predictions and labels to the lists
+        true_labels.extend(labels)
+        predicted_labels.extend(predictions)
+        cm = confusion_matrix(true_labels, predicted_labels)
         precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
         recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
