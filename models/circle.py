@@ -63,6 +63,8 @@ class Model(BaseModel):
             #pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
             to_tensor = transforms.ToTensor()
             transformed_image_tensor = to_tensor(transformed_image)
+            # todo - this is a hack for cuda, look a ways to fix this
+            transformed_image_tensor = transformed_image_tensor.to("cuda")
             #transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
             # print(f"transformed_image_tensor: {transformed_image_tensor.shape}")
             # print(f"transformed_image_tensor: {transformed_image_tensor.dtype}\n")
