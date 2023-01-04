@@ -31,7 +31,7 @@ class Model(BaseModel):
 
         self.use_reg = use_reg
 
-    def custom_transformer(self, input_image_batches, input_mask_batches):
+    def custom_transformer(self, input_image_batches, input_mask_batches, input_image_ita_batches):
         """
         Method wrapping the skin transformer since that method doesnt support batches.
         @param input_image_batches:
@@ -40,8 +40,8 @@ class Model(BaseModel):
         """
         transformed_image_batches = []
         for batch in range(len(input_image_batches)):
-            input_image = input_image_batches[batch]
-            input_image = input_image[0]
+            input_image = input_image_batches[batch][0]
+            input_image_ita = input_image_ita_batches[batch][0]
             # print(f"input_image: {input_image.dtype}")
             # print(f"input_image: {input_image.shape}")
             to_pil = transforms.ToPILImage()
@@ -54,13 +54,11 @@ class Model(BaseModel):
             # input_image2 = Image.fromarray(rgb_image_array)
             # input_image2.save("test_after_batch_conversion2.png")
 
-            input_mask = input_mask_batches[batch]
-            input_mask = input_mask[0]
+            input_mask = input_mask_batches[batch][0]
             input_mask = to_pil(input_mask.type(torch.float32))
             # input_mask.save("test_batch_mask.png")
 
-            # TODO probably need to convert back to tensor and back to uint64 type
-            transformed_image = transform_image(input_image, input_mask, verbose=False)
+            transformed_image = transform_image(input_image, input_mask, image_ita=input_image_ita, verbose=False)
             # print(f"transformed_image: {transformed_image.shape}")
             pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
             to_tensor = transforms.ToTensor()
@@ -72,7 +70,7 @@ class Model(BaseModel):
 
         return transformed_image_batches
 
-    def forward(self, input_image, expected_classification, d=None, input_mask=None):
+    def forward(self, input_image, expected_classification, d=None, input_mask=None, input_image_ita=None):
         debugging = False
         # run the input into the base model
         z = F.relu(self.base(input_image))
@@ -109,7 +107,8 @@ class Model(BaseModel):
                     # print(f"input_image.shape {input_image.shape}")
                     if True: debug_it("input_image", input_image, False)
                     output_skin_transformer = self.custom_transformer(np.array_split(input_image, len(input_image)),
-                                                                      np.array_split(input_mask, len(input_mask)))
+                                                                      np.array_split(input_mask, len(input_mask)),
+                                                                      np.array_split(input_image_ita, len(input_image_ita)))
                     # print(f"before np.array output_skin_transformer.shape {output_skin_transformer[0].shape}")
                     # output_skin_transformer = np.array(output_skin_transformer)
                     # print(f"after output_skin_transformer.shape {output_skin_transformer[0].shape}")
