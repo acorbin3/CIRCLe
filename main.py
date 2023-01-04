@@ -66,6 +66,18 @@ elif flags.dataset == "isic2018":
 model = importlib.import_module('models.' + flags.model) \
     .Model(flags, flags.hidden_dim, flags.base, use_reg=flags.use_reg_loss).to(device)
 
+#TODO - consider changing the optimizer. Here are some notes:
+"""
+Stochastic Gradient Descent (SGD): This is a simple and widely-used optimizer that updates the model weights by computing the gradient of the loss function with respect to the weights, and moving the weights in the opposite direction. SGD is sensitive to the learning rate, which controls the step size of the weight updates.
+
+Adam (Adaptive Moment Estimation): This is a popular optimizer that combines the ideas of momentum and learning rate decay. It keeps track of an exponentially weighted moving average of the gradients and the second moments of the gradients, and uses these to adapt the learning rate of each weight. Adam is generally a good default choice for many tasks.
+
+RMSProp (Root Mean Square Propagation): This optimizer is similar to Adam, but it only keeps track of the second moments of the gradients, and uses these to scale the learning rate of each weight. RMSProp can be faster than Adam and is often used in deep learning models.
+
+LBFGS (Limited-memory Broyden–Fletcher–Goldfarb–Shanno): This is an optimizer that uses the L-BFGS algorithm, which is a quasi-Newton method that approximates the Hessian matrix of the loss function. LBFGS is more computationally expensive than other optimizers, but can be effective for training deep learning models.
+
+There are many other optimizers available in PyTorch, such as Adagrad, Adadelta, and others
+"""
 optim = torch.optim.SGD(model.parameters(), lr=flags.lr, weight_decay=flags.weight_decay, momentum=0.9)
 
 
@@ -85,10 +97,12 @@ for epoch in range(flags.epochs):
     lossMeter = AverageMeter()
     regMeter = AverageMeter()
     correctMeter = AverageMeter()
+    precision_meter = AverageMeter()
+    recall_meter = AverageMeter()
     model.train()
     for data in tqdm(train_loader, ncols=75, leave=False):
         data = to_device(data)
-        loss, reg, correct = model(*data)
+        loss, reg, correct, precision, recall = model(*data)
 
         optim.zero_grad()
         if flags.use_reg_loss:
@@ -100,12 +114,16 @@ for epoch in range(flags.epochs):
         lossMeter.update(loss.detach().item(), data[0].shape[0])
         regMeter.update(reg.detach().item(), data[0].shape[0])
         correctMeter.update(correct.detach().item(), data[0].shape[0])
-        del loss, reg, correct
-    print('>>> Training: Loss ', lossMeter, ', Reg ', regMeter, ', Acc ', correctMeter)
+        precision_meter.update(precision.detach().item(), x.shape[0])
+        recall_meter.update(recall.detach().item(), x.shape[0])
+        del loss, reg, correct, precision, recall
+    print(f'>>> Training: Loss {lossMeter}, Reg {regMeter}, Acc {correctMeter}, precision: {precision_meter}, recall{recall_meter}')
 
     vallossMeter = AverageMeter()
     valregMeter = AverageMeter()
     valcorrectMeter = AverageMeter()
+    val_precision_meter = AverageMeter()
+    val_recall_meter = AverageMeter()
     model.eval()
     with torch.no_grad():
         if flags.dataset == "FitzPatrick17k":
@@ -120,13 +138,16 @@ for epoch in range(flags.epochs):
         elif flags.dataset == "isic2018":
             for x, y, d, mask, x_ita in tqdm(val_loader, ncols=75, leave=False):
                 x, y, d, mask, x_ita = x.to(device), y.to(device), d.to(device), mask.to(device), x_ita.to(device)
-                loss, reg, correct = model(x, y, input_mask=mask, input_image_ita=x_ita)
+                loss, reg, correct, precision, recall = model(x, y, input_mask=mask, input_image_ita=x_ita)
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])
                 valcorrectMeter.update(correct.detach().item(), x.shape[0])
-                del loss, reg, correct
-    print('>>> Val: Loss ', vallossMeter, ', Reg ', valregMeter, ', Acc ', valcorrectMeter)
+                val_precision_meter.update(precision.detach().item(), x.shape[0])
+                val_recall_meter.update(recall.detach().item(), x.shape[0])
+
+                del loss, reg, correct, precision, recall
+    print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valcorrectMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
 
     if valcorrectMeter.float() > best_val_acc:
         best_val_acc = valcorrectMeter.float()

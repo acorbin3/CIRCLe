@@ -9,6 +9,7 @@ import torchvision.transforms as transforms
 from PIL import Image
 from skimage import util
 import cv2
+from sklearn.metrics import precision_score, recall_score
 
 
 def debug_it(name, it, print_object=False):
@@ -87,48 +88,33 @@ class Model(BaseModel):
         loss = F.cross_entropy(logits, expected_classification)
         if debugging: debug_it("loss", loss, True)
 
-        # some kind of correction, not quite sure
+        # This is calculating accuracy
         correct = (torch.argmax(logits, 1) == expected_classification).sum().float() / input_image.shape[0]
         if debugging: debug_it("correct", correct, True)
 
-        # empty regurlization
+        # Calculate precision and recall
+        predictions = logits.detach().cpu().numpy()
+        labels = expected_classification.cpu().numpy()
+        precision = precision_score(labels, predictions)
+        recall = recall_score(labels, predictions)
+
+        # empty regularization
         reg = loss.new_zeros([1])
         if debugging: debug_it("reg", reg, True)
         if self.training:
             if self.use_reg:
                 with torch.no_grad():
-                    # encode fitzpatrick label of current image
-                    # d_onehot = d.new_zeros([d.shape[0], 6])
-                    # d_onehot.scatter_(1, d[:, None], 1)
-
-                    # generate random fitzpatrick skin type class to transform
-                    # d_new = torch.randint(0, 6, (d.size(0),)).to(d.device)
-                    # d_new_onehot = d.new_zeros([d.shape[0], 6])
-                    # d_new_onehot.scatter_(1, d_new[:, None], 1)
-                    # TODO - update to new image transformer
-                    # print(f"input_image.shape {input_image.shape}")
                     if debugging: debug_it("input_image", input_image, False)
                     output_skin_transformer = self.custom_transformer(np.array_split(input_image, len(input_image)),
                                                                       np.array_split(input_mask, len(input_mask)),
                                                                       np.array_split(input_image_ita, len(input_image_ita)))
-                    # print(f"before np.array output_skin_transformer.shape {output_skin_transformer[0].shape}")
-                    # output_skin_transformer = np.array(output_skin_transformer)
-                    # print(f"after output_skin_transformer.shape {output_skin_transformer[0].shape}")
                     x_new = torch.stack(output_skin_transformer)
 
-                    # x_new = input_image
-                    # New generated image
-                    # x_new = self.trans(x, d_onehot, d_new_onehot)
-
-                    # x_new = self.custom_transformer(x)
-
                     if debugging: debug_it("x_new", x_new, False)
-
-                    # print(x_new)
 
                 z_new = F.relu(self.base(x_new))
 
                 reg = self.alpha * F.mse_loss(z_new, z)
                 if debugging: debug_it("reg", reg, True)
         if debugging: print("------------------")
-        return loss, reg, correct
+        return loss, reg, correct, precision, recall
