@@ -107,7 +107,7 @@ class Model(BaseModel):
                     # d_new_onehot.scatter_(1, d_new[:, None], 1)
                     # TODO - update to new image transformer
                     # print(f"input_image.shape {input_image.shape}")
-                    if True: debug_it("input_image", input_image, False)
+                    if debugging: debug_it("input_image", input_image, False)
                     output_skin_transformer = self.custom_transformer(np.array_split(input_image, len(input_image)),
                                                                       np.array_split(input_mask, len(input_mask)),
                                                                       np.array_split(input_image_ita, len(input_image_ita)))
@@ -122,7 +122,7 @@ class Model(BaseModel):
 
                     # x_new = self.custom_transformer(x)
 
-                    if True: debug_it("x_new", x_new, False)
+                    if debugging: debug_it("x_new", x_new, False)
 
                     # print(x_new)
 
