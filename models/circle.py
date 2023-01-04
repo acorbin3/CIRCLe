@@ -60,10 +60,10 @@ class Model(BaseModel):
 
             transformed_image = transform_image(input_image, input_mask, image_ita=input_image_ita, verbose=False)
             # print(f"transformed_image: {transformed_image.shape}")
-            pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
+            #pil_image = Image.fromarray(util.img_as_ubyte(transformed_image))
             to_tensor = transforms.ToTensor()
-            transformed_image_tensor = to_tensor(pil_image)
-            transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
+            transformed_image_tensor = to_tensor(transformed_image)
+            #transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
             # print(f"transformed_image_tensor: {transformed_image_tensor.shape}")
             # print(f"transformed_image_tensor: {transformed_image_tensor.dtype}\n")
             transformed_image_batches.append(transformed_image_tensor)
