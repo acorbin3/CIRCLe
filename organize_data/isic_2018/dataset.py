@@ -256,7 +256,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # All base archetectures are expecting this normilization
         ])
     )
 
@@ -266,7 +266,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
         ])
     )
 
@@ -276,7 +276,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
         ])
     )
 
