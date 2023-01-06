@@ -124,11 +124,19 @@ class Model(BaseModel):
             if self.use_reg:
                 with torch.no_grad():
                     if debugging: debug_it("input_image", input_image, False)
-                    output_skin_transformer = self.custom_transformer(np.array_split(input_image, len(input_image)),
+
+                    # Undo normilization so we can transform the image
+                    mean = [0.485, 0.456, 0.406]
+                    std = [0.229, 0.224, 0.225]
+                    de_normalized_input = (input_image * std) + mean
+                    output_skin_transformer = self.custom_transformer(np.array_split(de_normalized_input, len(de_normalized_input)),
                                                                       np.array_split(input_mask, len(input_mask)),
                                                                       np.array_split(input_image_ita, len(input_image_ita)))
                     x_new = torch.stack(output_skin_transformer)
 
+                    # convert the transformed image to normalized to run through the base model
+                    normalize = transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
+                    x_new = normalize(x_new)
                     if debugging: debug_it("x_new", x_new, False)
 
                 z_new = F.relu(self.base(x_new))
