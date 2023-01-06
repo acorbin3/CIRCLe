@@ -43,7 +43,7 @@ class Model(BaseModel):
         @param input_mask_batches:
         @return: array of modified images
         """
-        device, dtype = input_image_batches.device, input_image_batches.dtype
+        device, dtype = input_image_batches[0].device, input_image_batches[0].dtype
         transformed_image_batches = []
         for batch in range(len(input_image_batches)):
             input_image = input_image_batches[batch][0]
@@ -146,4 +146,4 @@ class Model(BaseModel):
                 reg = self.alpha * F.mse_loss(z_new, z)
                 if debugging: debug_it("reg", reg, True)
         if debugging: print("------------------")
-        return loss, reg, correct, precision, recall
+        return loss, reg, correct, precision, recall, predictions

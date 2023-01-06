@@ -134,6 +134,8 @@ for epoch in range(flags.epochs):
     val_recall_meter = AverageMeter()
     model.eval()
     with torch.no_grad():
+        y_true = []
+        y_pred = []
         if flags.dataset == "FitzPatrick17k":
             for x, y, d in tqdm(val_loader, ncols=75, leave=False):
                 x, y, d = x.to(device), y.to(device), d.to(device)
@@ -146,7 +148,9 @@ for epoch in range(flags.epochs):
         elif flags.dataset == "isic2018":
             for x, y, d, mask, x_ita in tqdm(val_loader, ncols=75, leave=False):
                 x, y, d, mask, x_ita = x.to(device), y.to(device), d.to(device), mask.to(device), x_ita.to(device)
-                loss, reg, correct, precision, recall = model(x, y, input_mask=mask, input_image_ita=x_ita)
+                loss, reg, correct, precision, recall, predictions = model(x, y, input_mask=mask, input_image_ita=x_ita)
+                y_true.append(y.cpu().numpy())
+                y_pred.append(predictions)
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])
@@ -156,6 +160,11 @@ for epoch in range(flags.epochs):
 
                 del loss, reg, correct, precision, recall
     print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valcorrectMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
+    # Compute the confusion matrix
+    cm = confusion_matrix(y_true, y_pred)
+
+    # Display the confusion matrix
+    print(cm)
 
     if vallossMeter.float() < best_val_loss:
         best_val_loss = vallossMeter.float()
