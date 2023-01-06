@@ -43,6 +43,7 @@ class Model(BaseModel):
         @param input_mask_batches:
         @return: array of modified images
         """
+        device, dtype = input_image_batches.device, input_image_batches.dtype
         transformed_image_batches = []
         for batch in range(len(input_image_batches)):
             input_image = input_image_batches[batch][0]
@@ -69,7 +70,7 @@ class Model(BaseModel):
             to_tensor = transforms.ToTensor()
             transformed_image_tensor = to_tensor(transformed_image)
             # todo - this is a hack for cuda, look a ways to fix this
-            transformed_image_tensor = transformed_image_tensor.to("cuda")
+            transformed_image_tensor = transformed_image_tensor.to(device)
             # transformed_image_tensor = transformed_image_tensor.permute(1, 2, 0)
             # print(f"transformed_image_tensor: {transformed_image_tensor.shape}")
             # print(f"transformed_image_tensor: {transformed_image_tensor.dtype}\n")
@@ -125,9 +126,10 @@ class Model(BaseModel):
                 with torch.no_grad():
                     if debugging: debug_it("input_image", input_image, False)
 
-                    # Undo normilization so we can transform the image
-                    mean = [0.485, 0.456, 0.406]
-                    std = [0.229, 0.224, 0.225]
+                    # Undo normalization so we can transform the image
+                    device, dtype = input_image.device, input_image.dtype
+                    mean = torch.tensor([0.485, 0.456, 0.406], device=device, dtype=dtype).view(1, -1, 1, 1)
+                    std = torch.tensor([0.229, 0.224, 0.225], device=device, dtype=dtype).view(1, -1, 1, 1)
                     de_normalized_input = (input_image * std) + mean
                     output_skin_transformer = self.custom_transformer(np.array_split(de_normalized_input, len(de_normalized_input)),
                                                                       np.array_split(input_mask, len(input_mask)),
