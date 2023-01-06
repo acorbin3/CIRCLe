@@ -92,8 +92,12 @@ best_val_acc = 0.0
 best_val_loss = float('inf')
 best_by_test = 0
 best_test_loss = float('inf')
+
+best_val_precision = 0
+best_val_recall = 0
+
 for epoch in range(flags.epochs):
-    print('Epoch {}: Best val loss {}, Best val acc {}'.format(epoch, best_val_loss, best_val_acc))
+    print(f'Epoch {epoch}: Best val loss {best_val_loss}, Best val acc {best_val_acc}, best val recall {best_val_recall}, best val precision {best_val_precision}')
     lossMeter = AverageMeter()
     regMeter = AverageMeter()
     correctMeter = AverageMeter()
@@ -102,21 +106,25 @@ for epoch in range(flags.epochs):
     model.train()
     for data in tqdm(train_loader, ncols=75, leave=False):
         data = to_device(data)
-        loss, reg, correct, precision, recall = model(*data)
+        def closure():
+            loss, reg, correct, precision, recall = model(*data)
 
-        optim.zero_grad()
-        if flags.use_reg_loss:
-            (loss + reg).backward()
-        else:
-            loss.backward()
-        optim.step()
+            optim.zero_grad()
+            if flags.use_reg_loss:
+                (loss + reg).backward()
+            else:
+                loss.backward()
 
-        lossMeter.update(loss.detach().item(), data[0].shape[0])
-        regMeter.update(reg.detach().item(), data[0].shape[0])
-        correctMeter.update(correct.detach().item(), data[0].shape[0])
-        precision_meter.update(precision, data[0].shape[0])
-        recall_meter.update(recall, data[0].shape[0])
-        del loss, reg, correct, precision, recall
+
+            lossMeter.update(loss.detach().item(), data[0].shape[0])
+            regMeter.update(reg.detach().item(), data[0].shape[0])
+            correctMeter.update(correct.detach().item(), data[0].shape[0])
+            precision_meter.update(precision, data[0].shape[0])
+            recall_meter.update(recall, data[0].shape[0])
+
+
+        optim.step(closure)
+
     print(f'>>> Training: Loss {lossMeter}, Reg {regMeter}, Acc {correctMeter}, precision: {precision_meter}, recall{recall_meter}')
 
     vallossMeter = AverageMeter()
@@ -149,6 +157,13 @@ for epoch in range(flags.epochs):
                 del loss, reg, correct, precision, recall
     print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valcorrectMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
 
+    if vallossMeter.float() < best_val_loss:
+        best_val_loss = vallossMeter.float()
+
+    if val_recall_meter.float() > best_val_recall:
+        best_val_recall = val_recall_meter.float()
+    if val_precision_meter.float() > best_val_precision:
+        best_val_precision = val_precision_meter.float()
     if valcorrectMeter.float() > best_val_acc:
         best_val_acc = valcorrectMeter.float()
         save_path = os.path.join(flags.model_save_dir, 'epoch{}_acc_{:.3f}.ckpt'.format(epoch, best_val_acc))
