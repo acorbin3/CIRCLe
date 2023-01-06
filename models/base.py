@@ -27,3 +27,29 @@ class BaseModel(nn.Module):
         elif base == 'mobilenetv3l':
             self.base = models.mobilenet_v3_large(pretrained=True)
             self.base.classifier[3] = nn.Linear(in_features=self.base.classifier[3].in_features, out_features=hidden_dim)
+        elif base == "alexnet":
+            self.base = models.alexnet(pretrained=True)
+            self.base.classifier[6] = nn.Linear(self.base.classifier[6], hidden_dim)
+        elif base == "resnext50_32x4d":
+            self.base = models.resnext50_32x4d(pretrained=True)
+            self.base.fc = nn.Linear(in_features=self.base.fc.in_features, out_features=hidden_dim)
+        elif base == "squeezenet1_0":
+            self.base = models.squeezenet1_0(pretrained=True)
+            self.base.classifier[1] = nn.Conv2d(
+                in_channels=self.base.classifier[1].in_channels,
+                out_channels=hidden_dim,
+                kernel_size=1,
+                stride=1,
+                padding=0,
+                bias=True,
+            )
+            self.base.classifier[3] = nn.Linear(self.base.classifier[3], hidden_dim)
+        elif base == "shufflenet_v2_x1_0":
+            self.base = models.shufflenet_v2_x1_0(pretrained=True)
+            self.base.fc = nn.Linear(in_features=self.base.fc.in_features, out_features=hidden_dim)
+        elif base == "wide_resnet50_2":
+            self.base = models.wide_resnet50_2(pretrained=True)
+            self.base.fc = nn.Linear(in_features=self.base.fc.in_features, out_features=hidden_dim)
+        elif base == "mnasnet":
+            self.base = models.mnasnet1_0(pretrained=True)
+            self.base.classifier[-1] = nn.Linear(in_features=self.base.classifier[-1].in_features, out_features=hidden_dim)
