@@ -24,10 +24,10 @@ class Model(BaseModel):
     def __init__(self, config, hidden_dim=256, base='vgg16'):
         super(Model, self).__init__(hidden_dim, base)
 
-        self.base_output = nn.Sequential(
-            self.base(),
-            nn.ReLu(),
-        )
+        #self.base_output = nn.Sequential(
+         #   self.base(),
+          #  nn.ReLu(),
+        #)
 
         self.output_layer = nn.Sequential(
             # nn.Linear(hidden_dim, hidden_dim),
@@ -78,7 +78,8 @@ class Model(BaseModel):
         return transformed_image_batches
 
     def forward(self, x: torch.Tensor):
-        base_output = self.base_output(x)
+        base_output = nn.relu(self.base(x))
+        #base_output = self.base_output(x)
         logist = self.output_layer(base_output)
         return logist, base_output
 

@@ -64,8 +64,7 @@ elif flags.dataset == "isic2018":
     train_loader, val_loader, test_loader = get_isic_2018_dataloaders(isic_df)
 
 # load models
-model = importlib.import_module('models.' + flags.model) \
-    .Model(flags, flags.hidden_dim, flags.base, use_reg=flags.use_reg_loss).to(device)
+model = importlib.import_module('models.' + flags.model).Model(flags, flags.hidden_dim, flags.base).to(device)
 
 #TODO - consider changing the optimizer. Here are some notes:
 """
