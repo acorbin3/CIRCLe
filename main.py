@@ -4,6 +4,7 @@ import argparse
 import os, importlib
 from tqdm import tqdm
 import numpy as np
+from torch import nn
 
 from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
@@ -96,6 +97,9 @@ best_test_loss = float('inf')
 best_val_precision = 0
 best_val_recall = 0
 
+# TODO- update to use pytorch metrics: https://torchmetrics.readthedocs.io/en/stable/pages/overview.html
+
+
 for epoch in range(flags.epochs):
     print(f'Epoch {epoch}: Best val loss {best_val_loss}, Best val acc {best_val_acc}, best val recall {best_val_recall}, best val precision {best_val_precision}')
     lossMeter = AverageMeter()
@@ -107,17 +111,25 @@ for epoch in range(flags.epochs):
     for data in tqdm(train_loader, ncols=75, leave=False):
         data = to_device(data)
         def closure():
-            loss, reg, correct, precision, recall = model(*data)
-
             optim.zero_grad()
+            x, y, fst, mask, x_ita, transformed_image = data[0] , data[1], data[2], data[3], data[4], data[5]
+            inputs, labels = x, y
+            inputs_transformed, labels_transformed = transformed_image, y
+            logits, base_output = model(inputs)
+
+
+            loss = nn.CrossEntropyLoss(logits, labels)
+
             if flags.use_reg_loss:
+                logits_transformed, base_output_transformed = model(inputs_transformed)
+                reg = flags.alpha * nn.MSELoss(base_output_transformed, base_output)
                 (loss + reg).backward()
+                regMeter.update(reg.detach().item(), data[0].shape[0])
             else:
                 loss.backward()
 
 
             lossMeter.update(loss.detach().item(), data[0].shape[0])
-            regMeter.update(reg.detach().item(), data[0].shape[0])
             correctMeter.update(correct.detach().item(), data[0].shape[0])
             precision_meter.update(precision, data[0].shape[0])
             recall_meter.update(recall, data[0].shape[0])
@@ -137,8 +149,8 @@ for epoch in range(flags.epochs):
         y_true = []
         y_pred = []
         if flags.dataset == "FitzPatrick17k":
-            for x, y, d in tqdm(val_loader, ncols=75, leave=False):
-                x, y, d = x.to(device), y.to(device), d.to(device)
+            for x, y, fst in tqdm(val_loader, ncols=75, leave=False):
+                x, y, fst = x.to(device), y.to(device), fst.to(device)
                 loss, reg, correct = model(x, y)
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
@@ -146,10 +158,13 @@ for epoch in range(flags.epochs):
                 valcorrectMeter.update(correct.detach().item(), x.shape[0])
                 del loss, reg, correct
         elif flags.dataset == "isic2018":
-            for x, y, d, mask, x_ita in tqdm(val_loader, ncols=75, leave=False):
-                x, y, d, mask, x_ita = x.to(device), y.to(device), d.to(device), mask.to(device), x_ita.to(device)
+            for x, y, fst, mask, x_ita, transformed_image in tqdm(val_loader, ncols=75, leave=False):
+                x, y, fst, mask, x_ita, transformed_image = x.to(device), y.to(device), fst.to(device), mask.to(device), x_ita.to(device), transformed_image.to(device)
                 loss, reg, correct, precision, recall, predictions = model(x, y, input_mask=mask, input_image_ita=x_ita)
+                logits, base_output = model(x)
+                loss = nn.CrossEntropyLoss(logits, y)
                 y_true.append(y.cpu().numpy())
+                predictions = torch.argmax(logits, 1).cpu().numpy()
                 y_pred.append(predictions)
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
@@ -161,10 +176,10 @@ for epoch in range(flags.epochs):
                 del loss, reg, correct, precision, recall
     print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valcorrectMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
     # Compute the confusion matrix
-    cm = confusion_matrix(y_true, y_pred)
+    #cm = confusion_matrix(y_true, y_pred)
 
     # Display the confusion matrix
-    print(cm)
+    #print(cm)
 
     if vallossMeter.float() < best_val_loss:
         best_val_loss = vallossMeter.float()
