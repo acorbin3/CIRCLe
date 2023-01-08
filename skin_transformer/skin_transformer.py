@@ -76,10 +76,10 @@ def transform_image(image, mask, desired_fst=None, image_ita=None, verbose=False
         a_modifier = -.06
     else:
         if difference > 25:
-            b_modifier = .76
+            b_modifier = .05
             l_modifier = -.85
         else:
-            b_modifier = .56
+            b_modifier = .05
             l_modifier = -.65
         a_modifier = .1
     if verbose: print(
