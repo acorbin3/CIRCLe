@@ -21,20 +21,19 @@ def debug_it(name, it, print_object=False):
 
 
 class Model(BaseModel):
-    def __init__(self, config, hidden_dim=256, base='vgg16', use_reg=True):
+    def __init__(self, config, hidden_dim=256, base='vgg16'):
         super(Model, self).__init__(hidden_dim, base)
 
-        #self.fc1 = nn.Linear(hidden_dim, hidden_dim)
-        #self.dropout = nn.Dropout(p=0.5)
+        self.base_output = nn.Sequential(
+            self.base(),
+            nn.ReLu(),
+        )
 
-        self.out_layer = nn.Linear(hidden_dim, config.num_classes)
-        # self.trans = load_stargan(
-        #    config.gan_path + 'stargan_last-G.ckpt')
-        # self.trans.eval()
-
-        self.alpha = config.alpha
-
-        self.use_reg = use_reg
+        self.output_layer = nn.Sequential(
+            # nn.Linear(hidden_dim, hidden_dim),
+            # nn.Dropout(p=0.5),
+            nn.Linear(hidden_dim, config.num_classes)
+        )
 
     def custom_transformer(self, input_image_batches, input_mask_batches, input_image_ita_batches):
         """
@@ -78,14 +77,19 @@ class Model(BaseModel):
 
         return transformed_image_batches
 
-    def forward(self, input_image, expected_classification, d=None, input_mask=None, input_image_ita=None):
+    def forward(self, x: torch.Tensor):
+        base_output = self.base_output(x)
+        logist = self.output_layer(base_output)
+        return logist, base_output
+
+    def forward_old(self, input_image, expected_classification, d=None, input_mask=None, input_image_ita=None):
         debugging = False
         # run the input into the base model
         z = F.relu(self.base(input_image))
 
-        #TODO - evaluate if we should add these extra 2 layers to help prevent overfitting to the traning dataset
-        #z = self.fc1(z)
-        #z = self.dropout(z)
+        # TODO - evaluate if we should add these extra 2 layers to help prevent overfitting to the traning dataset
+        # z = self.fc1(z)
+        # z = self.dropout(z)
 
         if debugging: print("################")
         if debugging: debug_it("orig_z", z)
@@ -131,9 +135,10 @@ class Model(BaseModel):
                     mean = torch.tensor([0.485, 0.456, 0.406], device=device, dtype=dtype).view(1, -1, 1, 1)
                     std = torch.tensor([0.229, 0.224, 0.225], device=device, dtype=dtype).view(1, -1, 1, 1)
                     de_normalized_input = (input_image * std) + mean
-                    output_skin_transformer = self.custom_transformer(np.array_split(de_normalized_input, len(de_normalized_input)),
-                                                                      np.array_split(input_mask, len(input_mask)),
-                                                                      np.array_split(input_image_ita, len(input_image_ita)))
+                    output_skin_transformer = self.custom_transformer(
+                        np.array_split(de_normalized_input, len(de_normalized_input)),
+                        np.array_split(input_mask, len(input_mask)),
+                        np.array_split(input_image_ita, len(input_image_ita)))
                     x_new = torch.stack(output_skin_transformer)
 
                     # convert the transformed image to normalized to run through the base model
