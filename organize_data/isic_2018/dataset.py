@@ -43,6 +43,9 @@ class ISIC2018SkinDataset():
 
         mask_name = self.df.loc[self.df.index[idx], 'mask_path']
         mask = Image.open(mask_name)
+
+        transformed_image_name = self.df.loc[self.df.index[idx], 'transformed_path']
+        transformed_image =Image.open(transformed_image_name)
         #mask.save("test_mask_before_transform.png")
 
         label = self.df.loc[self.df.index[idx], 'label_encoded']
@@ -60,7 +63,7 @@ class ISIC2018SkinDataset():
         #pil_image = to_pil(mask.type(torch.float32))
         #pil_image.save("test_after_mask_transform.png")
 
-        return image, label, fitzpatrick, mask, image_ita
+        return image, label, fitzpatrick, mask, image_ita, transformed_image
         # return image, label, fitzpatrick
 
 
@@ -117,6 +120,15 @@ def download_isic_2018_datasets():
         download_and_extract(ground_truth_url, "ISIC_2018_GT/")
     else:
         print("isic 2018 ground truth classification data already downlaoded")
+
+    # cached image transforms
+    transform_image_count = len(list(Path("ISIC_2018_GT").glob("*.jpg")))
+    if transform_image_count == 0:
+        print("Downloading transformed iaages")
+        transform_image_url = "https://isic2018task3masks.s3.amazonaws.com/transformed_images_2023_01_08.zip"
+        download_and_extract(transform_image_url, "ISIC_2018/transformed/")
+
+
 
 
 def download_and_extract(images_url, directory, create_root_dir=True):
@@ -185,8 +197,10 @@ def get_cached_dataframe():
     isic_df["label_encoded"] = encoder.fit_transform(isic_df["label"])
 
     mask_directory = str(list(Path("ISIC_2018/masks").glob("**/*.png"))[0].parent)
+    transform_directory = str(list(Path("ISIC_2018/transformed").glob("**/*.png"))[0].parent)
 
     isic_df["mask_path"] = isic_df["image_id"].apply(lambda x: f"{mask_directory}/{x}.png")
+    isic_df["transformed_path"] = isic_df["image_id"].apply(lambda x: f"{transform_directory}/{x}.png")
     print("Creating dataframe. Complete!")
     return isic_df
 
