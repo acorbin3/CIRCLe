@@ -173,6 +173,12 @@ for epoch in range(flags.epochs):
                 x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
 
                 logits, base_output = model(x)
+
+                if flags.use_reg_loss:
+                    logits_transformed, base_output_transformed = model(transformed_image)
+                    reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
+                    valregMeter.update(reg.detach().item(), x.shape[0])
+
                 loss = F.cross_entropy(logits, y)
                 y_true.append(y.cpu().numpy())
                 predictions = torch.argmax(logits, 1).cpu().numpy()
@@ -185,13 +191,16 @@ for epoch in range(flags.epochs):
                 recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
-                #valregMeter.update(reg.detach().item(), x.shape[0])
                 valaccuracyMeter.update(accuracy.detach().item(), x.shape[0])
                 val_precision_meter.update(precision, x.shape[0])
                 val_recall_meter.update(recall, x.shape[0])
 
                 del loss, accuracy, precision, recall
-    print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
+    if flags.use_reg_loss:
+        print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
+    else:
+        print(
+            f'>>> Val: Loss {vallossMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
     # Compute the confusion matrix
     #cm = confusion_matrix(y_true, y_pred)
 
