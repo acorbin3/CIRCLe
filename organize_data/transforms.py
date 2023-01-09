@@ -35,9 +35,13 @@ class Resize:
     def __init__(self, size):
         self.size = size
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         image = F.resize(image, self.size)
-        target = F.resize(target, self.size, interpolation=T.InterpolationMode.NEAREST)
+        if target_is_mask:
+            target = F.resize(target, self.size, interpolation=T.InterpolationMode.NEAREST)
+        else:
+            target = F.resize(target, self.size)
+
         return image, target
 
 
@@ -48,10 +52,13 @@ class RandomResize:
             max_size = min_size
         self.max_size = max_size
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         size = random.randint(self.min_size, self.max_size)
         image = F.resize(image, size)
-        target = F.resize(target, size, interpolation=T.InterpolationMode.NEAREST)
+        if target_is_mask:
+            target = F.resize(target, size, interpolation=T.InterpolationMode.NEAREST)
+        else:
+            target = F.resize(target, size)
         return image, target
 
 
@@ -59,7 +66,7 @@ class RandomHorizontalFlip:
     def __init__(self, flip_prob=.5):
         self.flip_prob = flip_prob
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         if random.random() < self.flip_prob:
             image = F.hflip(image)
             target = F.hflip(target)
@@ -70,7 +77,7 @@ class RandomRotation:
     def __init__(self, degrees):
         self.degrees = degrees
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         random_degrees = random.randint(abs(self.degrees) * -1, abs(self.degrees))
         image = F.rotate(image, angle=random_degrees)
         target = F.rotate(target, angle=random_degrees)
@@ -81,7 +88,7 @@ class RandomCrop:
     def __init__(self, size):
         self.size = size
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         image = pad_if_smaller(image, self.size)
         target = pad_if_smaller(target, self.size, fill=255)
         crop_params = T.RandomCrop.get_params(image, (self.size, self.size))
@@ -94,16 +101,20 @@ class CenterCrop:
     def __init__(self, size):
         self.size = size
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         image = F.center_crop(image, self.size)
         target = F.center_crop(target, self.size)
         return image, target
 
 
 class PILToTensor:
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         image = F.pil_to_tensor(image)
-        target = torch.as_tensor(np.array(target), dtype=torch.int64)
+        if target_is_mask:
+            target = torch.as_tensor(np.array(target), dtype=torch.int64)
+        else:
+            target = F.pil_to_tensor(target)
+
         return image, target
 
 
@@ -111,8 +122,10 @@ class ConvertImageDtype:
     def __init__(self, dtype):
         self.dtype = dtype
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         image = F.convert_image_dtype(image, self.dtype)
+        if not target_is_mask:
+            target = F.convert_image_dtype(target, self.dtype)
         return image, target
 
 
@@ -121,6 +134,8 @@ class Normalize:
         self.mean = mean
         self.std = std
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         image = F.normalize(image, mean=self.mean, std=self.std)
+        if not target_is_mask:
+            target = F.normalize(target, self.dtype)
         return image, target
