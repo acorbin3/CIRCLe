@@ -9,6 +9,7 @@ from torch import nn
 from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
 from organize_data.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
+from sklearn.metrics import confusion_matrix
 
 parser = argparse.ArgumentParser(description='DG')
 parser.add_argument('--dataset', type=str, default='FitzPatrick17k')
@@ -111,7 +112,7 @@ for epoch in range(flags.epochs):
         data = to_device(data)
         def closure():
             optim.zero_grad()
-            x, y, fst, mask, x_ita, transformed_image = data[0] , data[1], data[2], data[3], data[4], data[5]
+            x, y, transformed_image = data[0] , data[1], data[2]
             inputs, labels = x, y
             inputs_transformed, labels_transformed = transformed_image, y
             logits, base_output = model(inputs)
@@ -157,14 +158,20 @@ for epoch in range(flags.epochs):
                 valcorrectMeter.update(correct.detach().item(), x.shape[0])
                 del loss, reg, correct
         elif flags.dataset == "isic2018":
-            for x, y, fst, mask, x_ita, transformed_image in tqdm(val_loader, ncols=75, leave=False):
-                x, y, fst, mask, x_ita, transformed_image = x.to(device), y.to(device), fst.to(device), mask.to(device), x_ita.to(device), transformed_image.to(device)
-                loss, reg, correct, precision, recall, predictions = model(x, y, input_mask=mask, input_image_ita=x_ita)
+            for x, y, transformed_image in tqdm(val_loader, ncols=75, leave=False):
+                x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
+
                 logits, base_output = model(x)
                 loss = nn.CrossEntropyLoss(logits, y)
                 y_true.append(y.cpu().numpy())
                 predictions = torch.argmax(logits, 1).cpu().numpy()
+                labels = y.cpu().numpy()
                 y_pred.append(predictions)
+
+
+                cm = confusion_matrix(labels, predictions)
+                precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
+                recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])

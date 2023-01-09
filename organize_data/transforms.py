@@ -25,9 +25,9 @@ class Compose:
     def __init__(self, transforms):
         self.transforms = transforms
 
-    def __call__(self, image, target):
+    def __call__(self, image, target, target_is_mask=True):
         for t in self.transforms:
-            image, target = t(image, target)
+            image, target = t(image, target, target_is_mask)
         return image, target
 
 
@@ -137,5 +137,5 @@ class Normalize:
     def __call__(self, image, target, target_is_mask=True):
         image = F.normalize(image, mean=self.mean, std=self.std)
         if not target_is_mask:
-            target = F.normalize(target, self.dtype)
+            target = F.normalize(target, mean=self.mean, std=self.std)
         return image, target
