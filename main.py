@@ -155,7 +155,7 @@ for epoch in range(flags.epochs):
     valaccuracyMeter = AverageMeter()
     val_precision_meter = AverageMeter()
     val_recall_meter = AverageMeter()
-    model.eval()
+    #model.eval()
     with torch.no_grad():
         y_true = []
         y_pred = []
@@ -180,10 +180,13 @@ for epoch in range(flags.epochs):
                     valregMeter.update(reg.detach().item(), x.shape[0])
 
                 loss = F.cross_entropy(logits, y)
-                y_true.append(y.cpu().numpy())
+
                 predictions = torch.argmax(logits, 1).cpu().numpy()
-                labels = y.cpu().numpy()
                 y_pred.append(predictions)
+
+                labels = y.cpu().numpy()
+                y_true.append(labels)
+
 
                 accuracy = (torch.argmax(logits, 1) == y).sum().float() / x.shape[0]
                 cm = confusion_matrix(labels, predictions)
