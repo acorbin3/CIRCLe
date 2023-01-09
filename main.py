@@ -185,12 +185,12 @@ for epoch in range(flags.epochs):
                 recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
-                valregMeter.update(reg.detach().item(), x.shape[0])
+                #valregMeter.update(reg.detach().item(), x.shape[0])
                 valaccuracyMeter.update(accuracy.detach().item(), x.shape[0])
                 val_precision_meter.update(precision, x.shape[0])
                 val_recall_meter.update(recall, x.shape[0])
 
-                del loss, reg, accuracy, precision, recall
+                del loss, accuracy, precision, recall
     print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
     # Compute the confusion matrix
     #cm = confusion_matrix(y_true, y_pred)
