@@ -179,7 +179,7 @@ for epoch in range(flags.epochs):
                 labels = y.cpu().numpy()
                 y_pred.append(predictions)
 
-                accuracy = (torch.argmax(logits, 1) == labels).sum().float() / x.shape[0]
+                accuracy = (torch.argmax(logits, 1) == y).sum().float() / x.shape[0]
                 cm = confusion_matrix(labels, predictions)
                 precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
                 recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
