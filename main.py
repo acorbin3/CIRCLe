@@ -123,7 +123,7 @@ for epoch in range(flags.epochs):
 
             if flags.use_reg_loss:
                 logits_transformed, base_output_transformed = model(inputs_transformed)
-                reg = flags.alpha * nn.MSELoss(base_output_transformed, base_output)
+                reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
                 (loss + reg).backward()
                 regMeter.update(reg.detach().item(), data[0].shape[0])
             else:
