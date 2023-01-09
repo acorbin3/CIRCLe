@@ -24,6 +24,13 @@ class BaseModel(nn.Module):
         elif base == 'mobilenetv2':
             self.base = models.mobilenet_v2(pretrained=True)
             self.base.classifier[1] = nn.Linear(in_features=self.base.classifier[1].in_features, out_features=hidden_dim)
+            # Freeze all the layers
+            for param in self.base.parameters():
+                param.requires_grad = False
+
+            # Unfreeze the last layer
+            for param in self.base.classifier[1].parameters():
+                param.requires_grad = True
         elif base == 'mobilenetv3l':
             self.base = models.mobilenet_v3_large(pretrained=True)
             self.base.classifier[3] = nn.Linear(in_features=self.base.classifier[3].in_features, out_features=hidden_dim)
