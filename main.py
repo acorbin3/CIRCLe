@@ -119,8 +119,17 @@ for epoch in range(flags.epochs):
             logits, base_output = model(inputs)
 
 
+            # Compute metrics for main input image
             loss = F.cross_entropy(logits, labels)
             accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
+
+            predictions = torch.argmax(logits, 1).cpu().numpy()
+            labels = labels.cpu().numpy()
+
+            cm = confusion_matrix(labels, predictions)
+            precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
+            recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
+
 
             if flags.use_reg_loss:
                 logits_transformed, base_output_transformed = model(inputs_transformed)
