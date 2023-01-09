@@ -152,7 +152,7 @@ for epoch in range(flags.epochs):
 
     vallossMeter = AverageMeter()
     valregMeter = AverageMeter()
-    valcorrectMeter = AverageMeter()
+    valaccuracyMeter = AverageMeter()
     val_precision_meter = AverageMeter()
     val_recall_meter = AverageMeter()
     model.eval()
@@ -166,32 +166,32 @@ for epoch in range(flags.epochs):
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])
-                valcorrectMeter.update(correct.detach().item(), x.shape[0])
+                valaccuracyMeter.update(correct.detach().item(), x.shape[0])
                 del loss, reg, correct
         elif flags.dataset == "isic2018":
             for x, y, transformed_image in tqdm(val_loader, ncols=75, leave=False):
                 x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
 
                 logits, base_output = model(x)
-                loss = nn.CrossEntropyLoss(logits, y)
+                loss = F.cross_entropy(logits, y)
                 y_true.append(y.cpu().numpy())
                 predictions = torch.argmax(logits, 1).cpu().numpy()
                 labels = y.cpu().numpy()
                 y_pred.append(predictions)
 
-
+                accuracy = (torch.argmax(logits, 1) == labels).sum().float() / x.shape[0]
                 cm = confusion_matrix(labels, predictions)
                 precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
                 recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
 
                 vallossMeter.update(loss.detach().item(), x.shape[0])
                 valregMeter.update(reg.detach().item(), x.shape[0])
-                valcorrectMeter.update(correct.detach().item(), x.shape[0])
+                valaccuracyMeter.update(accuracy.detach().item(), x.shape[0])
                 val_precision_meter.update(precision, x.shape[0])
                 val_recall_meter.update(recall, x.shape[0])
 
-                del loss, reg, correct, precision, recall
-    print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valcorrectMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
+                del loss, reg, accuracy, precision, recall
+    print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
     # Compute the confusion matrix
     #cm = confusion_matrix(y_true, y_pred)
 
@@ -205,8 +205,8 @@ for epoch in range(flags.epochs):
         best_val_recall = val_recall_meter.float()
     if val_precision_meter.float() > best_val_precision:
         best_val_precision = val_precision_meter.float()
-    if valcorrectMeter.float() > best_val_acc:
-        best_val_acc = valcorrectMeter.float()
+    if valaccuracyMeter.float() > best_val_acc:
+        best_val_acc = valaccuracyMeter.float()
         save_path = os.path.join(flags.model_save_dir, 'epoch{}_acc_{:.3f}.ckpt'.format(epoch, best_val_acc))
         torch.save(model.state_dict(), save_path)
         print('Saved model with highest acc ...')
