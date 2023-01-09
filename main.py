@@ -105,7 +105,7 @@ for epoch in range(flags.epochs):
     print(f'Epoch {epoch}: Best val loss {best_val_loss}, Best val acc {best_val_acc}, best val recall {best_val_recall}, best val precision {best_val_precision}')
     lossMeter = AverageMeter()
     regMeter = AverageMeter()
-    correctMeter = AverageMeter()
+    accuracyMeter = AverageMeter()
     precision_meter = AverageMeter()
     recall_meter = AverageMeter()
     model.train()
@@ -120,6 +120,7 @@ for epoch in range(flags.epochs):
 
 
             loss = F.cross_entropy(logits, labels)
+            accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
 
             if flags.use_reg_loss:
                 logits_transformed, base_output_transformed = model(inputs_transformed)
@@ -131,14 +132,14 @@ for epoch in range(flags.epochs):
 
 
             lossMeter.update(loss.detach().item(), data[0].shape[0])
-            correctMeter.update(correct.detach().item(), data[0].shape[0])
+            accuracyMeter.update(accuracy.detach().item(), data[0].shape[0])
             precision_meter.update(precision, data[0].shape[0])
             recall_meter.update(recall, data[0].shape[0])
 
 
         optim.step(closure)
 
-    print(f'>>> Training: Loss {lossMeter}, Reg {regMeter}, Acc {correctMeter}, precision: {precision_meter}, recall{recall_meter}')
+    print(f'>>> Training: Loss {lossMeter}, Reg {regMeter}, Acc {accuracyMeter}, precision: {precision_meter}, recall{recall_meter}')
 
     vallossMeter = AverageMeter()
     valregMeter = AverageMeter()
