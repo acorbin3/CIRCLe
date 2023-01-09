@@ -126,7 +126,7 @@ def download_isic_2018_datasets():
     if transform_image_count == 0:
         print("Downloading transformed iaages")
         transform_image_url = "https://isic2018task3masks.s3.amazonaws.com/transformed_images_2023_01_08.zip"
-        download_and_extract(transform_image_url, "ISIC_2018/transformed/", False)
+        download_and_extract(transform_image_url, "ISIC_2018/transformed/")
 
 
 
@@ -197,10 +197,10 @@ def get_cached_dataframe():
     isic_df["label_encoded"] = encoder.fit_transform(isic_df["label"])
 
     mask_directory = str(list(Path("ISIC_2018/masks").glob("**/*.png"))[0].parent)
-    transform_directory = str(list(Path("ISIC_2018/transformed/").glob("**/*.jpg"))[0].parent)
+    transform_directory = str(list(Path("ISIC_2018/transformed/ISIC_2018/transformed/").glob("**/*.jpg"))[0].parent)
 
     isic_df["mask_path"] = isic_df["image_id"].apply(lambda x: f"{mask_directory}/{x}.png")
-    isic_df["transformed_path"] = isic_df["image_id"].apply(lambda x: f"{transform_directory}/{x}.png")
+    isic_df["transformed_path"] = isic_df["image_id"].apply(lambda x: f"{transform_directory}/{x}.jpg")
     print("Creating dataframe. Complete!")
     return isic_df
 
