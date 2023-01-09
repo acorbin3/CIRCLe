@@ -5,6 +5,7 @@ import os, importlib
 from tqdm import tqdm
 import numpy as np
 from torch import nn
+import torch.nn.functional as F
 
 from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
@@ -118,7 +119,7 @@ for epoch in range(flags.epochs):
             logits, base_output = model(inputs)
 
 
-            loss = nn.CrossEntropyLoss(logits, labels)
+            loss = F.cross_entropy(logits, labels)
 
             if flags.use_reg_loss:
                 logits_transformed, base_output_transformed = model(inputs_transformed)
