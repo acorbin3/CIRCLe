@@ -113,7 +113,10 @@ for epoch in range(flags.epochs):
     metrics = Metrics()
     for data in tqdm(train_loader, ncols=75, leave=False):
         data = to_device(data)
-        optim.zero_grad()
+        #optim.zero_grad()
+        #insead of optim.zero_grad(), the below lines are suppose to be faster
+        for param in model.parameters():
+            param.grad = None
         x, y, transformed_image = data[0] , data[1], data[2]
         inputs, labels = x, y
         inputs_transformed, labels_transformed = transformed_image, y
@@ -153,6 +156,7 @@ for epoch in range(flags.epochs):
                 val_metrics.reg = reg
 
             val_metrics.compute_metrics(logits, y)
+            val_metrics.update_metrics(x.shape[0])
 
     if flags.use_reg_loss:
         print(f'>>> Val: Loss {val_metrics.loss_meter}, Reg {val_metrics.regularization_meter}, Acc {metrics.accuracy_meter}, precision: {val_metrics.precision_meter}, recall{metrics.recall_meter}')
