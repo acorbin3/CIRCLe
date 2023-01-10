@@ -71,6 +71,7 @@ if flags.model != "cnn":
     model = importlib.import_module('models.' + flags.model).Model(flags, flags.hidden_dim, flags.base).to(device)
 else:
     model = CNN()
+    model.cuda()
 
 #TODO - consider changing the optimizer. Here are some notes:
 """

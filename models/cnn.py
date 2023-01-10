@@ -17,38 +17,28 @@ class CNN(nn.Module):
         self.conv3 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.pool3 = nn.MaxPool2d(2)
 
-        # Fully connected layer
-        self.fc = nn.Linear(64 * 8 * 8, 512)
+        self.flatten = nn.Flatten()
+        self.fc1 = nn.Linear(64 * 16 * 16, 512)
+        self.dropout = nn.Dropout(0.5)
+        self.fc2 = nn.Linear(512, 7)
 
-        # Dropout layer
-        self.dropout = nn.Dropout(p=0.5)
+def forward(self, x):
+    # Pass input through first convolutional layer
+    x = self.pool1(F.relu(self.conv1(x)))
 
-        # Output layer
-        self.out = nn.Linear(512, 7)
+    # Pass output through second convolutional layer
+    x = self.pool2(F.relu(self.conv2(x)))
 
-    def forward(self, x):
-        # Pass input through first convolutional layer
-        x = self.pool1(F.relu(self.conv1(x)))
+    # Pass output through third convolutional layer
+    x = self.pool3(F.relu(self.conv3(x)))
 
-        # Pass output through second convolutional layer
-        x = self.pool2(F.relu(self.conv2(x)))
+    # Flatten the feature map
+    x = self.flatten(x)
+    x = self.fc1(x)
+    base = self.dropout(x)
+    logits = self.fc2(base)
 
-        # Pass output through third convolutional layer
-        x = self.pool3(F.relu(self.conv3(x)))
-
-        # Flatten the feature map
-        x = x.view(-1, 64 * 8 * 8)
-
-        # Pass output through the fully connected layer
-        base = F.relu(self.fc(x))
-
-        # Apply dropout
-        x = self.dropout(base)
-
-        # Pass output through the output layer
-        x = self.out(x)
-
-        return x, base
+    return logits, base
 
 
 # Initialize the model
