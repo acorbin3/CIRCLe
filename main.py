@@ -126,14 +126,17 @@ for epoch in range(flags.epochs):
 
             # Compute metrics for main input image
             loss = F.cross_entropy(logits, labels)
-            accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
+            predictions = torch.argmax(logits, 1)
+            #accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
+            accuracy = torch.mean(torch.eq(predictions, labels).float())
 
-            predictions = torch.argmax(logits, 1).cpu().numpy()
+            predictions = predictions.cpu().numpy()
             labels = labels.cpu().numpy()
 
             cm = confusion_matrix(labels, predictions)
-            precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
-            recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
+            diag = cm.diagonal().sum()
+            precision = diag / cm.sum(axis=0).sum()
+            recall = diag / cm.sum(axis=1).sum()
 
 
             if flags.use_reg_loss:
