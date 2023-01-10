@@ -5,7 +5,7 @@ class CNN(nn.Module):
     def __init__(self):
         super(CNN, self).__init__()
 
-        self.base = nn.sequential(
+        self.base = nn.Sequential(
             # First convolutional layer
             nn.Conv2d(3, 16, kernel_size=3, padding=1),
             nn.ReLu(),
