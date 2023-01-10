@@ -7,6 +7,7 @@ import numpy as np
 from torch import nn
 import torch.nn.functional as F
 
+from models.cnn import CNN
 from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
 from organize_data.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
@@ -66,7 +67,10 @@ elif flags.dataset == "isic2018":
     train_loader, val_loader, test_loader = get_isic_2018_dataloaders(isic_df)
 
 # load models
-model = importlib.import_module('models.' + flags.model).Model(flags, flags.hidden_dim, flags.base).to(device)
+if flags.model != "cnn":
+    model = importlib.import_module('models.' + flags.model).Model(flags, flags.hidden_dim, flags.base).to(device)
+else:
+    model = CNN()
 
 #TODO - consider changing the optimizer. Here are some notes:
 """
