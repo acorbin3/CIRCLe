@@ -11,7 +11,11 @@ class AverageMeter(object):
         self.sum += val * n
 
     def float(self):
-        return self.sum / self.count
+        if self.count > 0:
+            return self.sum / self.count
+        else:
+            return 0
+
 
     def __repr__(self):
         if self.count > 0:
