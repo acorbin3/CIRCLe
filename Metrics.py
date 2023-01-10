@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from sklearn.metrics import confusion_matrix
 
 
-class Metrics():
+class Metrics:
     def __init__(self):
         self.loss_meter = AverageMeter()
         self.accuracy_meter = AverageMeter()
@@ -30,13 +30,12 @@ class Metrics():
         self.recall = _diagonal / self.confusion_matrix.sum(axis=1).sum()
         return
 
-
-    def update_metrics(self, data, reg=None):
+    def update_metrics(self, data):
         # data  = data[0].shape[0]
         self.loss_meter.update(self.loss.detach().item(), data)
         self.accuracy_meter.update(self.accuracy.detach().item(), data)
         self.precision_meter.update(self.precision, data)
         self.recall_meter.update(self.recall, data)
-        if reg:
-            self.regularization_meter.update(reg.detach().item(), data)
+        if self.reg:
+            self.regularization_meter.update(self.reg.detach().item(), data)
         return
