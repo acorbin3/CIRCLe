@@ -14,4 +14,7 @@ class AverageMeter(object):
         return self.sum / self.count
 
     def __repr__(self):
-        return '%.3f' % (self.sum / self.count)
+        if self.count > 0:
+            return '%.3f' % (self.sum / self.count)
+        else:
+            return "0.000"
