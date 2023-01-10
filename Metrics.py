@@ -21,7 +21,7 @@ class Metrics():
         self.accuracy = torch.mean(torch.eq(self.predictions, labels).float())
 
         _predictions = self.predictions.cpu().numpy()
-        _labels = self.losslabels.cpu().numpy()
+        _labels = labels.cpu().numpy()
 
         self.confusion_matrix = confusion_matrix(_labels, _predictions)
         _diagonal = self.confusion_matrix.diagonal().sum()

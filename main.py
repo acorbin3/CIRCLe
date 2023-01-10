@@ -127,10 +127,10 @@ for epoch in range(flags.epochs):
         if flags.use_reg_loss:
             logits_transformed, base_output_transformed = model(inputs_transformed)
             reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
-            (loss + reg).backward()
+            (metrics.loss + reg).backward()
             metrics.reg = reg
         else:
-            loss.backward()
+            metrics.loss.backward()
 
 
         metrics.update_metrics(data[0].shape[0])
