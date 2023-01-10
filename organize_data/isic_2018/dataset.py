@@ -293,16 +293,17 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     train_loader = torch.utils.data.DataLoader(
         transformed_train,
         batch_size=batch_size,
-        drop_last=True)
+        drop_last=True,
+        pin_memory=True)
 
     val_loader = torch.utils.data.DataLoader(
         transformed_val,
         batch_size=batch_size,
-        shuffle=shuffle, drop_last=True)
+        shuffle=shuffle, drop_last=True, pin_memory=True)
 
     test_loader = torch.utils.data.DataLoader(
         transformed_test,
         batch_size=batch_size,
-        shuffle=False, drop_last=False)
+        shuffle=False, drop_last=False, pin_memory=True)
 
     return train_loader, val_loader, test_loader
