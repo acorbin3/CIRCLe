@@ -7,6 +7,7 @@ import numpy as np
 from torch import nn
 import torch.nn.functional as F
 
+from Metrics import Metrics
 from models.cnn import CNN
 from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
@@ -108,125 +109,70 @@ best_val_recall = 0
 
 for epoch in range(flags.epochs):
     print(f'Epoch {epoch}: Best val loss {best_val_loss}, Best val acc {best_val_acc}, best val recall {best_val_recall}, best val precision {best_val_precision}')
-    lossMeter = AverageMeter()
-    regMeter = AverageMeter()
-    accuracyMeter = AverageMeter()
-    precision_meter = AverageMeter()
-    recall_meter = AverageMeter()
     model.train()
+    metrics = Metrics()
     for data in tqdm(train_loader, ncols=75, leave=False):
         data = to_device(data)
-        def closure():
-            optim.zero_grad()
-            x, y, transformed_image = data[0] , data[1], data[2]
-            inputs, labels = x, y
-            inputs_transformed, labels_transformed = transformed_image, y
-            logits, base_output = model(inputs)
+        optim.zero_grad()
+        x, y, transformed_image = data[0] , data[1], data[2]
+        inputs, labels = x, y
+        inputs_transformed, labels_transformed = transformed_image, y
+
+        # pass inputs through the model
+        logits, base_output = model(inputs)
+
+        # Compute metrics for main input image
+        metrics.compute_metrics(logits, labels)
+
+        if flags.use_reg_loss:
+            logits_transformed, base_output_transformed = model(inputs_transformed)
+            reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
+            (loss + reg).backward()
+            metrics.reg = reg
+        else:
+            loss.backward()
 
 
-            # Compute metrics for main input image
-            loss = F.cross_entropy(logits, labels)
-            predictions = torch.argmax(logits, 1)
-            #accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
-            accuracy = torch.mean(torch.eq(predictions, labels).float())
+        metrics.update_metrics(data[0].shape[0])
+        optim.step()
 
-            predictions = predictions.cpu().numpy()
-            labels = labels.cpu().numpy()
+    print(f'>>> Training: Loss {metrics.loss_meter}, Reg {metrics.regularization_meter}, Acc {metrics.accuracy_meter}, precision: {metrics.precision_meter}, recall{metrics.recall_meter}')
 
-            cm = confusion_matrix(labels, predictions)
-            diag = cm.diagonal().sum()
-            precision = diag / cm.sum(axis=0).sum()
-            recall = diag / cm.sum(axis=1).sum()
+    val_metrics = Metrics()
 
-
-            if flags.use_reg_loss:
-                logits_transformed, base_output_transformed = model(inputs_transformed)
-                reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
-                (loss + reg).backward()
-                regMeter.update(reg.detach().item(), data[0].shape[0])
-            else:
-                loss.backward()
-
-
-            lossMeter.update(loss.detach().item(), data[0].shape[0])
-            accuracyMeter.update(accuracy.detach().item(), data[0].shape[0])
-            precision_meter.update(precision, data[0].shape[0])
-            recall_meter.update(recall, data[0].shape[0])
-
-
-        optim.step(closure)
-
-    print(f'>>> Training: Loss {lossMeter}, Reg {regMeter}, Acc {accuracyMeter}, precision: {precision_meter}, recall{recall_meter}')
-
-    vallossMeter = AverageMeter()
-    valregMeter = AverageMeter()
-    valaccuracyMeter = AverageMeter()
-    val_precision_meter = AverageMeter()
-    val_recall_meter = AverageMeter()
     #model.eval()
     with torch.no_grad():
-        y_true = []
-        y_pred = []
-        if flags.dataset == "FitzPatrick17k":
-            for x, y, fst in tqdm(val_loader, ncols=75, leave=False):
-                x, y, fst = x.to(device), y.to(device), fst.to(device)
-                loss, reg, correct = model(x, y)
+        for x, y, transformed_image in tqdm(val_loader, ncols=75, leave=False):
+            x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
 
-                vallossMeter.update(loss.detach().item(), x.shape[0])
-                valregMeter.update(reg.detach().item(), x.shape[0])
-                valaccuracyMeter.update(correct.detach().item(), x.shape[0])
-                del loss, reg, correct
-        elif flags.dataset == "isic2018":
-            for x, y, transformed_image in tqdm(val_loader, ncols=75, leave=False):
-                x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
+            logits, base_output = model(x)
 
-                logits, base_output = model(x)
+            if flags.use_reg_loss:
+                logits_transformed, base_output_transformed = model(transformed_image)
+                reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
+                val_metrics.reg = reg
 
-                if flags.use_reg_loss:
-                    logits_transformed, base_output_transformed = model(transformed_image)
-                    reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
-                    valregMeter.update(reg.detach().item(), x.shape[0])
+            val_metrics.compute_metrics(logits, y)
 
-                loss = F.cross_entropy(logits, y)
-
-                predictions = torch.argmax(logits, 1).cpu().numpy()
-                y_pred.append(predictions)
-
-                labels = y.cpu().numpy()
-                y_true.append(labels)
-
-
-                accuracy = (torch.argmax(logits, 1) == y).sum().float() / x.shape[0]
-                cm = confusion_matrix(labels, predictions)
-                precision = cm.diagonal().sum() / cm.sum(axis=0).sum()
-                recall = cm.diagonal().sum() / cm.sum(axis=1).sum()
-
-                vallossMeter.update(loss.detach().item(), x.shape[0])
-                valaccuracyMeter.update(accuracy.detach().item(), x.shape[0])
-                val_precision_meter.update(precision, x.shape[0])
-                val_recall_meter.update(recall, x.shape[0])
-
-                del loss, accuracy, precision, recall
     if flags.use_reg_loss:
-        print(f'>>> Val: Loss {vallossMeter}, Reg {valregMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
+        print(f'>>> Val: Loss {val_metrics.loss_meter}, Reg {val_metrics.regularization_meter}, Acc {metrics.accuracy_meter}, precision: {val_metrics.precision_meter}, recall{metrics.recall_meter}')
     else:
-        print(
-            f'>>> Val: Loss {vallossMeter}, Acc {valaccuracyMeter}, precision: {val_precision_meter}, recall{val_recall_meter}')
+        print(f'>>> Val: Loss {val_metrics.loss_meter}, Acc {metrics.accuracy_meter}, precision: {val_metrics.precision_meter}, recall{metrics.recall_meter}')
     # Compute the confusion matrix
     #cm = confusion_matrix(y_true, y_pred)
 
     # Display the confusion matrix
     #print(cm)
 
-    if vallossMeter.float() < best_val_loss:
-        best_val_loss = vallossMeter.float()
+    if val_metrics.loss_meter.float() < best_val_loss:
+        best_val_loss = val_metrics.loss_meter.float()
 
-    if val_recall_meter.float() > best_val_recall:
-        best_val_recall = val_recall_meter.float()
-    if val_precision_meter.float() > best_val_precision:
-        best_val_precision = val_precision_meter.float()
-    if valaccuracyMeter.float() > best_val_acc:
-        best_val_acc = valaccuracyMeter.float()
+    if val_metrics.recall_meter.float() > best_val_recall:
+        best_val_recall = val_metrics.recall_meter.float()
+    if val_metrics.precision_meter.float() > best_val_precision:
+        best_val_precision = val_metrics.precision_meter.float()
+    if val_metrics.accuracy_meter.float() > best_val_acc:
+        best_val_acc = val_metrics.accuracy_meter.float()
         save_path = os.path.join(flags.model_save_dir, 'epoch{}_acc_{:.3f}.ckpt'.format(epoch, best_val_acc))
         torch.save(model.state_dict(), save_path)
         print('Saved model with highest acc ...')
