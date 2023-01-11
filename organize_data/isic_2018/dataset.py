@@ -42,7 +42,7 @@ class ISIC2018SkinDataset():
         # image.save("test_image_before_transform.png")
 
         transformed_image_name = self.df.loc[self.df.index[idx], 'transformed_path']
-        transformed_image =Image.open(transformed_image_name)
+        transformed_image = Image.open(transformed_image_name)
 
         label = self.df.loc[self.df.index[idx], 'label_encoded']
 
@@ -51,13 +51,13 @@ class ISIC2018SkinDataset():
             image, transformed_image = self.transform(image, transformed_image, target_is_mask=False)
 
         # print(f"dataset fetch image: {image.shape} {image.dtype}")
-        #to_pil = transforms.ToPILImage()
+        # to_pil = transforms.ToPILImage()
 
         # pil_image = to_pil(image.type(torch.float32))
         # pil_image.save("test_fetch_image.png")
 
-        #pil_image = to_pil(mask.type(torch.float32))
-        #pil_image.save("test_after_mask_transform.png")
+        # pil_image = to_pil(mask.type(torch.float32))
+        # pil_image.save("test_after_mask_transform.png")
 
         return image, label, transformed_image
         # return image, label, fitzpatrick
@@ -123,8 +123,6 @@ def download_isic_2018_datasets():
         print("Downloading transformed iaages")
         transform_image_url = "https://isic2018task3masks.s3.amazonaws.com/transformed_images_2023_01_08.zip"
         download_and_extract(transform_image_url, "ISIC_2018/transformed/")
-
-
 
 
 def download_and_extract(images_url, directory, create_root_dir=True):
@@ -266,7 +264,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # All base archetectures are expecting this normilization
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # All base archetectures are expecting this normilization
         ])
     )
 
@@ -276,7 +275,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # this seems to really mess up the colors of the base image
         ])
     )
 
@@ -286,7 +286,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
             Resize(size=(128, 128)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225]) # this seems to really mess up the colors of the base image
+            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # this seems to really mess up the colors of the base image
         ])
     )
 
@@ -294,7 +295,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
         transformed_train,
         batch_size=batch_size,
         drop_last=True,
-        pin_memory=True, num_workers=2)
+        pin_memory=True,
+        num_workers=2)
 
     val_loader = torch.utils.data.DataLoader(
         transformed_val,
