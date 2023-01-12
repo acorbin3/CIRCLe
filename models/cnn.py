@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CNN(nn.Module):
-    def __init__(self):
+    def __init__(self,hidden_layer_size):
         super(CNN, self).__init__()
 
         self.base = nn.Sequential(
@@ -20,12 +20,12 @@ class CNN(nn.Module):
             nn.MaxPool2d(2),
             # Flatten the feature map
             nn.Flatten(),
-            nn.Linear(64 * 16 * 16, 512)
+            nn.Linear(64 * 16 * 16, hidden_layer_size)
         )
 
         self.output_layer = nn.Sequential(
             nn.Dropout(0.2),
-            nn.Linear(512, 7)
+            nn.Linear(hidden_layer_size, 7)
         )
 
     def forward(self, x):
@@ -33,6 +33,3 @@ class CNN(nn.Module):
         logist = self.output_layer(base_output)
         return logist, base_output
 
-
-# Initialize the model
-model = CNN()
