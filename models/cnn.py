@@ -2,7 +2,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 class CNN(nn.Module):
-    def __init__(self,hidden_layer_size):
+    def __init__(self,hidden_layer_size, drop_out):
         super(CNN, self).__init__()
 
         self.base = nn.Sequential(
@@ -24,7 +24,7 @@ class CNN(nn.Module):
         )
 
         self.output_layer = nn.Sequential(
-            nn.Dropout(0.2),
+            nn.Dropout(drop_out),
             nn.Linear(hidden_layer_size, 7)
         )
 

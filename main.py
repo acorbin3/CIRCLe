@@ -72,7 +72,7 @@ elif flags.dataset == "isic2018":
 if flags.model != "cnn":
     model = importlib.import_module('models.' + flags.model).Model(flags, flags.hidden_dim, flags.base).to(device)
 else:
-    model = CNN(16)
+    model = CNN(8, .4)
     model.cuda()
 
 summary(model, (3, 128, 128))
