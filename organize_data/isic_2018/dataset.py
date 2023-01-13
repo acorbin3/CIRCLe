@@ -203,8 +203,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     all_domains = [1, 2, 3, 4, 5, 6]
 
     # group index based on FSK. Split into 80/20 for training, test. then 50/50 for test and validation
-    print("Splitting up the dataset into train,test, validation datasets")
-    grouped = isic_df.groupby("fizpatrick_skin_type")
+    print("Splitting up the dataset into train,test, validation datasets based on the skin condition")
+    grouped = isic_df.groupby(["label", "fizpatrick_skin_type"])
     group_indexes = grouped.indices
 
     train_indexes = []
@@ -212,12 +212,23 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     val_indexes = []
 
     for group, index_list in group_indexes.items():
-        index_train, index_test, _, _ = train_test_split(index_list, index_list, test_size=0.2, random_state=42)
-        train_indexes += list(index_train)
+        # print(f"index_list: {len(index_list)}")
+        index_test = []
+        index_val = []
+        if len(index_list) > 1:
+            index_train, index_test, _, _ = train_test_split(index_list, index_list, test_size=0.2, random_state=42)
+            train_indexes += list(index_train)
+        elif len(index_list) == 1:
+            train_indexes += list(index_list)
 
-        index_test, index_val, _, _ = train_test_split(index_test, index_test, test_size=0.5, random_state=42)
-        test_indexes += list(index_test)
-        val_indexes += list(index_val)
+        # print(f"index_train: {len(index_train)} index_test: {len(index_test)}")
+
+        if len(index_test) > 1:
+            index_test, index_val, _, _ = train_test_split(index_test, index_test, test_size=0.5, random_state=42)
+            test_indexes += list(index_test)
+            val_indexes += list(index_val)
+        elif len(index_test) == 1:
+            test_indexes += list(index_test)
 
         print("fizpatrick_skin_type:", group, len(index_list))
         print(f"\t train {len(index_train)}")
@@ -235,17 +246,18 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     print(f"train size: {len(train)}")
     print(f"test size: {len(test)}")
     print(f"val size: {len(val)}")
+    print(f"dataset sizes:{len(val) + len(test) + len(train)}. df size: {len(isic_df)}")
 
-    for s in all_domains:
-        print("\ttrain: skin type", s, ":", len(train[train['fizpatrick_skin_type'] == s]))
+    conditions = isic_df["label"].unique().tolist()
+    print("----")
+    print_splits(all_domains, conditions, train)
 
     print("----")
-    for s in all_domains:
-        print("\ttest: skin type", s, ":", len(test[test['fizpatrick_skin_type'] == s]))
+    print_splits(all_domains, conditions, test)
 
     print("----")
-    for s in all_domains:
-        print("\tval: skin type", s, ":", len(val[val['fizpatrick_skin_type'] == s]))
+    print_splits(all_domains, conditions, val)
+
 
     print("train size:", len(train))
     print("val size:", len(val))
@@ -309,3 +321,12 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
         shuffle=False, drop_last=False, pin_memory=True, num_workers=2)
 
     return train_loader, val_loader, test_loader
+
+
+def print_splits(all_domains, conditions, df_collection):
+    for s in all_domains:
+        skin_type_len = len(df_collection[df_collection['fizpatrick_skin_type'] == s])
+        print(f"\ttrain: skin type {s} : {skin_type_len} ({skin_type_len / len(df_collection) * 100:.2f})")
+        for c in conditions:
+            condition_len = len(df_collection[df_collection['label'] == c])
+            print(f"\t\t{c}: {condition_len} ({condition_len / skin_type_len * 100:.2f})")
