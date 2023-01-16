@@ -3,6 +3,7 @@
 import os
 from pathlib import Path
 
+import cv2
 import torch
 from PIL import Image, ImageFile
 import pandas as pd
@@ -18,9 +19,10 @@ from organize_data.transforms import Compose, RandomRotation, RandomHorizontalFl
     ConvertImageDtype
 
 import torchvision.transforms as transforms
+from torchvision.utils import Dataset
 
 
-class ISIC2018SkinDataset():
+class ISIC2018SkinDataset(Dataset):
     def __init__(self, df, transform=None):
         """
         Args:
@@ -198,8 +200,40 @@ def get_cached_dataframe():
     print("Creating dataframe. Complete!")
     return isic_df
 
+def compute_img_mean_std(isic_df, image_size):
+    """
+        computing the mean and std of three channel on the whole dataset,
+        first we should normalize the image from 0-255 to 0-1
+    """
 
-def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
+    img_h, img_w = image_size, image_size
+    imgs = []
+    means, stdevs = [], []
+
+    for index, row in isic_df.iterrows():
+    #for i in tqdm(range(len(image_paths))):
+        img = cv2.imread(row["image_path"])
+        img = cv2.resize(img, (img_h, img_w))
+        imgs.append(img)
+
+    imgs = np.stack(imgs, axis=3)
+    print(imgs.shape)
+
+    imgs = imgs.astype(np.float32) / 255.
+
+    for i in range(3):
+        pixels = imgs[:, :, i, :].ravel()  # resize to one row
+        means.append(np.mean(pixels))
+        stdevs.append(np.std(pixels))
+
+    means.reverse()  # BGR --> RGB
+    stdevs.reverse()
+
+    print("normMean = {}".format(means))
+    print("normStd = {}".format(stdevs))
+    return means, stdevs
+
+def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=True):
     all_domains = [1, 2, 3, 4, 5, 6]
 
     # group index based on FSK. Split into 80/20 for training, test. then 50/50 for test and validation
@@ -268,38 +302,41 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, shuffle=True):
     label_codes1 = sorted(list(val['label'].unique()))
     print("val skin conditions:", len(label_codes1))
 
+    # compute mean and standard deviantion:
+    normMean, normStd = compute_img_mean_std(isic_df, image_size)
+
     transformed_train = ISIC2018SkinDataset(
         df=train,
         transform=Compose([
             # RandomRotation(degrees=15),
             # RandomHorizontalFlip(),
-            Resize(size=(128, 128)),
+            Resize(size=(image_size, image_size)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            # All base archetectures are expecting this normilization
+            Normalize(normMean, normStd)
+            #Now using computed mean and std abonve^ Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
     transformed_val = ISIC2018SkinDataset(
         df=val,
         transform=Compose([
-            Resize(size=(128, 128)),
+            Resize(size=(image_size, image_size)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            # this seems to really mess up the colors of the base image
+            Normalize(normMean, normStd)
+            #Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
     transformed_test = ISIC2018SkinDataset(
         df=test,
         transform=Compose([
-            Resize(size=(128, 128)),
+            Resize(size=(image_size, image_size)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
-            Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
-            # this seems to really mess up the colors of the base image
+            Normalize(normMean, normStd)
+            #Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
