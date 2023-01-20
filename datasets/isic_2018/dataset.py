@@ -257,7 +257,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
 
         # print(f"index_train: {len(index_train)} index_test: {len(index_test)}")
 
-        if len(index_test) > 1:
+        if len(index_test) > 1 and False:
             index_test, index_val, _, _ = train_test_split(index_test, index_test, test_size=0.5, random_state=42)
             test_indexes += list(index_test)
             val_indexes += list(index_val)
@@ -355,7 +355,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     val_loader = torch.utils.data.DataLoader(
         transformed_val,
         batch_size=batch_size,
-        shuffle=shuffle, drop_last=True, pin_memory=True, num_workers=2)
+        shuffle=False, drop_last=False, pin_memory=True, num_workers=2)
 
     test_loader = torch.utils.data.DataLoader(
         transformed_test,
