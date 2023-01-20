@@ -129,7 +129,6 @@ for epoch in range(flags.epochs):
 
         # pass inputs through the model
         outputs = model(inputs)
-        predictions = outputs.max(1, keepdim=True)[1]
 
         # Compute metrics for main input image
         metrics.compute_metrics(outputs, labels)
@@ -154,14 +153,14 @@ for epoch in range(flags.epochs):
         for x, y, transformed_image in tqdm(val_loader, ncols=75, leave=False):
             x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
 
-            logits, base_output = model(x)
+            outputs = model(x)
 
             if flags.use_reg_loss:
                 logits_transformed, base_output_transformed = model(transformed_image)
                 reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
                 val_metrics.reg = reg
 
-            val_metrics.compute_metrics(logits, y)
+            val_metrics.compute_metrics(outputs, y)
             val_metrics.update_metrics(x.shape[0])
 
     if flags.use_reg_loss:
