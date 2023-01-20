@@ -22,7 +22,9 @@ class Metrics:
         self.predictions = torch.argmax(logits, 1)
         # accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
         #self.accuracy = torch.mean(torch.eq(self.predictions, labels).float())
-        self.accuracy = logits.eq(labels.view_as(logits)).sum().item()/logits[0]
+        #self.accuracy = logits.eq(labels.view_as(logits)).sum().item()/logits[0]
+        self.accuracy = (logits.argmax(dim=1) == labels).float().mean()
+
         _predictions = self.predictions.cpu().numpy()
         _labels = labels.cpu().numpy()
 
