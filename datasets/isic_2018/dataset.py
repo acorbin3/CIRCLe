@@ -257,12 +257,15 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
 
         # print(f"index_train: {len(index_train)} index_test: {len(index_test)}")
 
+        # todo - next block of code should be fixed once we figure out validation issues
         if len(index_test) > 1 and False:
             index_test, index_val, _, _ = train_test_split(index_test, index_test, test_size=0.5, random_state=42)
             test_indexes += list(index_test)
             val_indexes += list(index_val)
         elif len(index_test) == 1:
             test_indexes += list(index_test)
+        test_indexes += list(index_test)
+        val_indexes += list(index_test)
 
         print("fizpatrick_skin_type:", group, len(index_list))
         print(f"\t train {len(index_train)}")
