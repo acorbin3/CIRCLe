@@ -155,7 +155,8 @@ for epoch in range(flags.epochs):
 
             outputs = model(x)
 
-            if flags.use_reg_loss:
+            if False:
+                # TODO - need to update model(once its working) to return features and logists
                 logits_transformed, base_output_transformed = model(transformed_image)
                 reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
                 val_metrics.reg = reg
