@@ -19,7 +19,7 @@ from datasets.transforms import Compose, RandomRotation, RandomHorizontalFlip, R
     ConvertImageDtype
 
 import torchvision.transforms as transforms
-from torchvision.utils.data import Dataset
+from torch.utils.data import Dataset
 
 
 class ISIC2018SkinDataset(Dataset):
