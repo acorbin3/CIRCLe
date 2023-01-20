@@ -21,8 +21,8 @@ class Metrics:
         self.loss = self.loss_function(logits, labels)
         self.predictions = torch.argmax(logits, 1)
         # accuracy = (torch.argmax(logits, 1) == labels).sum().float() / inputs.shape[0]
-        self.accuracy = torch.mean(torch.eq(self.predictions, labels).float())
-
+        #self.accuracy = torch.mean(torch.eq(self.predictions, labels).float())
+        self.accuracy = logits.eq(labels.view_as(logits)).sum().item()/logits.shape[0]
         _predictions = self.predictions.cpu().numpy()
         _labels = labels.cpu().numpy()
 

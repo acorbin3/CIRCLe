@@ -20,7 +20,7 @@ class Model(BaseModel):
         )
 
     def forward(self, x: torch.Tensor):
-        base_output = F.relu(self.base(x))
-        logist = self.output_layer(base_output)
-        return logist, base_output
+        #base_output = F.relu(self.base(x))
+        #logist = self.output_layer(base_output)
+        return self.base(x)
 

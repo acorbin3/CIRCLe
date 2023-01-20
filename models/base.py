@@ -15,6 +15,11 @@ class BaseModel(nn.Module):
         elif base == 'resnet18':
             self.base = models.resnet18(pretrained=True)
             self.base.fc = nn.Linear(self.base.fc.in_features, hidden_dim)
+
+        elif base == "resnext101_32x8d":
+            self.base = models.resnext101_32x8d(pretrained=True)
+            self.base.fc = nn.Linear(in_features=2048, out_features=7)
+
         elif base == 'vgg16':
             self.base = models.vgg16(pretrained=True)
             self.base.classifier[6] = nn.Linear(self.base.classifier[6].in_features, hidden_dim)
@@ -23,7 +28,8 @@ class BaseModel(nn.Module):
             self.base.classifier = nn.Linear(in_features=self.base.classifier.in_features, out_features=hidden_dim)
         elif base == 'mobilenetv2':
             self.base = models.mobilenet_v2(pretrained=True)
-            self.base.classifier[1] = nn.Linear(in_features=self.base.classifier[1].in_features, out_features=hidden_dim)
+            self.base.classifier[1] = nn.Linear(in_features=self.base.classifier[1].in_features,
+                                                out_features=hidden_dim)
             # Freeze all the layers
             for param in self.base.parameters():
                 param.requires_grad = False
@@ -33,7 +39,8 @@ class BaseModel(nn.Module):
                 param.requires_grad = True
         elif base == 'mobilenetv3l':
             self.base = models.mobilenet_v3_large(pretrained=True)
-            self.base.classifier[3] = nn.Linear(in_features=self.base.classifier[3].in_features, out_features=hidden_dim)
+            self.base.classifier[3] = nn.Linear(in_features=self.base.classifier[3].in_features,
+                                                out_features=hidden_dim)
         elif base == "alexnet":
             self.base = models.alexnet(pretrained=True)
             self.base.classifier[6] = nn.Linear(self.base.classifier[6], hidden_dim)
@@ -59,4 +66,5 @@ class BaseModel(nn.Module):
             self.base.fc = nn.Linear(in_features=self.base.fc.in_features, out_features=hidden_dim)
         elif base == "mnasnet":
             self.base = models.mnasnet1_0(pretrained=True)
-            self.base.classifier[-1] = nn.Linear(in_features=self.base.classifier[-1].in_features, out_features=hidden_dim)
+            self.base.classifier[-1] = nn.Linear(in_features=self.base.classifier[-1].in_features,
+                                                 out_features=hidden_dim)

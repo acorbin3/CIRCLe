@@ -118,20 +118,21 @@ for epoch in range(flags.epochs):
 
     for x, y, transformed_image in tqdm(train_loader, ncols=75, leave=False):
 
-        # optim.zero_grad()
+        optim.zero_grad()
         # insead of optim.zero_grad(), the below lines are suppose to be faster
-        for param in model.parameters():
-            param.grad = None
+        #for param in model.parameters():
+        #    param.grad = None
 
         x, y, transformed_image = Variable(x).to(device), Variable(y).to(device), Variable(transformed_image).to(device)
         inputs, labels = x, y
         inputs_transformed, labels_transformed = transformed_image, y
 
         # pass inputs through the model
-        logits, base_output = model(inputs)
+        outputs = model(inputs)
+        predictions = outputs.max(1, keepdim=True)[1]
 
         # Compute metrics for main input image
-        metrics.compute_metrics(logits, labels)
+        metrics.compute_metrics(outputs, labels)
 
         if False:
             logits_transformed, base_output_transformed = model(inputs_transformed)
