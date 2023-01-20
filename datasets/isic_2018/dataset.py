@@ -212,7 +212,7 @@ def compute_img_mean_std(isic_df, image_size):
 
     for index, row in isic_df.iterrows():
     #for i in tqdm(range(len(image_paths))):
-        img = cv2.imread(row["image_path"])
+        img = cv2.imread(str(row["image_path"]))
         img = cv2.resize(img, (img_h, img_w))
         imgs.append(img)
 
@@ -303,7 +303,12 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     print("val skin conditions:", len(label_codes1))
 
     # compute mean and standard deviantion:
-    normMean, normStd = compute_img_mean_std(isic_df, image_size)
+    # Next line can be uncommented if there is a new dataset. This really only needs to be done 1 time
+
+    # normMean, normStd = compute_img_mean_std(isic_df, image_size)
+    normMean = [0.76308113, 0.54567724, 0.57007957]
+    normStd = [0.14093588, 0.15261903, 0.1699746]
+
 
     transformed_train = ISIC2018SkinDataset(
         df=train,
