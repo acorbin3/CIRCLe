@@ -15,11 +15,11 @@ import zipfile
 import os
 from sklearn.preprocessing import LabelEncoder
 
-from organize_data.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize, \
+from datasets.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize, \
     ConvertImageDtype
 
 import torchvision.transforms as transforms
-from torchvision.utils import Dataset
+from torchvision.utils.data import Dataset
 
 
 class ISIC2018SkinDataset(Dataset):

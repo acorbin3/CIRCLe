@@ -2,7 +2,7 @@ import os
 import argparse
 from star_gan.solver_stargan import Solver
 from torch.backends import cudnn
-from organize_data.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
+from datasets.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
 
 
 def str2bool(v):

@@ -11,9 +11,9 @@ from torchsummary import summary
 
 from Metrics import Metrics
 from models.cnn import CNN
-from organize_data.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
+from datasets.isic_2018.dataset import get_isic_2018_dataloaders, download_isic_2018_datasets, get_cached_dataframe
 from util import AverageMeter
-from organize_data.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
+from datasets.fitzpatrick_17k_dataset.dataset import get_fitz_dataloaders
 from sklearn.metrics import confusion_matrix
 
 parser = argparse.ArgumentParser(description='DG')
