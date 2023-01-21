@@ -282,6 +282,27 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
 
     # TODO - need to add more training data for the classes that are not balanced
     conditions = isic_df["label"].unique().tolist()
+    aug_list = {}
+    counts = train["label"].value_counts()
+    max = counts.max()
+    for c in conditions:
+        value = counts[c]
+        print(c, value, max/value)
+    """NV
+    5361
+    MEL
+    888
+    BKL
+    876
+    BCC
+    410
+    AKIEC
+    260
+    VASC
+    113
+    DF
+    91
+    """
 
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
 
