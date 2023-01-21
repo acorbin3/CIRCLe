@@ -292,9 +292,9 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     max = counts.max()
     for c in conditions:
         value = counts[c]
-        ratio = max / value
+        ratio = int(max / value)
         print(c, value, ratio)
-        train = train.append([train.loc[df_train['label'] == c, :]] * (data_aug_rate[i] - 1),
+        train = train.append([train.loc[train['label'] == c, :]] * (ratio - 1),
                                    ignore_index=True)
     print("After augmentation")
     print(train["label"].value_counts())
