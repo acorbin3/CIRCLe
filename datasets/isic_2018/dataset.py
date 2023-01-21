@@ -282,12 +282,24 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
 
     # TODO - need to add more training data for the classes that are not balanced
     conditions = isic_df["label"].unique().tolist()
-    aug_list = {}
+
     counts = train["label"].value_counts()
+
+    print("Before augmentation")
+
+    print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
+
     max = counts.max()
     for c in conditions:
         value = counts[c]
-        print(c, value, max/value)
+        ratio = max / value
+        print(c, value, ratio)
+        train = train.append([train.loc[df_train['label'] == c, :]] * (data_aug_rate[i] - 1),
+                                   ignore_index=True)
+    print("After augmentation")
+    print(train["label"].value_counts())
+    print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
+
     """NV
     5361
     MEL
@@ -303,8 +315,6 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     DF
     91
     """
-
-    print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
 
     print(f"train size: {len(train)}")
     print(f"test size: {len(test)}")
