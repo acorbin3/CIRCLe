@@ -432,8 +432,9 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
 def print_splits(all_domains, conditions, df_collection):
     print(df_collection['label'].value_counts())
     for s in all_domains:
-        skin_type_len = len(df_collection[df_collection['fizpatrick_skin_type'] == s])
+        df_skin_filter = df_collection[df_collection['fizpatrick_skin_type'] == s]
+        skin_type_len = len(df_skin_filter)
         print(f"\t skin type {s} : {skin_type_len} ({skin_type_len / len(df_collection) * 100:.2f})")
         for c in conditions:
-            condition_len = len(df_collection[df_collection['label'] == c])
+            condition_len = len(df_skin_filter[df_skin_filter['label'] == c])
             print(f"\t\t{c}: {condition_len} ({condition_len / skin_type_len * 100:.2f})")
