@@ -14,6 +14,7 @@ import requests
 import zipfile
 import os
 from sklearn.preprocessing import LabelEncoder
+from imblearn.over_sampling import RandomOverSampler
 
 from datasets.transforms import Compose, RandomRotation, RandomHorizontalFlip, Resize, PILToTensor, Normalize, \
     ConvertImageDtype
@@ -200,6 +201,7 @@ def get_cached_dataframe():
     print("Creating dataframe. Complete!")
     return isic_df
 
+
 def compute_img_mean_std(isic_df, image_size):
     """
         computing the mean and std of three channel on the whole dataset,
@@ -211,7 +213,7 @@ def compute_img_mean_std(isic_df, image_size):
     means, stdevs = [], []
 
     for index, row in isic_df.iterrows():
-    #for i in tqdm(range(len(image_paths))):
+        # for i in tqdm(range(len(image_paths))):
         img = cv2.imread(str(row["image_path"]))
         img = cv2.resize(img, (img_h, img_w))
         imgs.append(img)
@@ -232,6 +234,7 @@ def compute_img_mean_std(isic_df, image_size):
     print("normMean = {}".format(means))
     print("normStd = {}".format(stdevs))
     return means, stdevs
+
 
 def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=True):
     all_domains = [1, 2, 3, 4, 5, 6]
@@ -288,14 +291,18 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     print("Before augmentation")
 
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
+    ros = RandomOverSampler()
+    train, _ = ros.fit_resample(train, train["label"])
 
-    max = counts.max()
-    for c in conditions:
-        value = counts[c]
-        ratio = int(max / value)
-        print(c, value, ratio)
-        train = train.append([train.loc[train['label'] == c, :]] * (ratio - 1),
-                                   ignore_index=True)
+    # max = counts.max()
+    # for c in conditions:
+    #    value = counts[c]
+    #    ratio = int(max / value)
+    #    print(c, value, ratio)
+        # This is to oversampled, but this approach didnt seem to work well
+        # if False:
+        # train = train.append([train.loc[train['label'] == c, :]] * (ratio - 1),
+        #                     ignore_index=True)
     print("After augmentation")
     print(train["label"].value_counts())
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
@@ -331,7 +338,6 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     print("----")
     print_splits(all_domains, conditions, val)
 
-
     print("train size:", len(train))
     print("val size:", len(val))
     print("train skin types:", train.fizpatrick_skin_type.unique())
@@ -341,24 +347,23 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     label_codes1 = sorted(list(val['label'].unique()))
     print("val skin conditions:", len(label_codes1))
 
-    # compute mean and standard deviantion:
+    # compute mean and standard deviation:
     # Next line can be uncommented if there is a new dataset. This really only needs to be done 1 time
 
     # normMean, normStd = compute_img_mean_std(isic_df, image_size)
     normMean = [0.76308113, 0.54567724, 0.57007957]
     normStd = [0.14093588, 0.15261903, 0.1699746]
 
-
     transformed_train = ISIC2018SkinDataset(
         df=train,
         transform=Compose([
-            # RandomRotation(degrees=15),
-            # RandomHorizontalFlip(),
+            RandomRotation(degrees=15),
+            RandomHorizontalFlip(),
             Resize(size=(image_size, image_size)),
             PILToTensor(),
             ConvertImageDtype(torch.float),
             Normalize(normMean, normStd)
-            #Now using computed mean and std abonve^ Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # Now using computed mean and std above^ Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
@@ -369,7 +374,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
             PILToTensor(),
             ConvertImageDtype(torch.float),
             Normalize(normMean, normStd)
-            #Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
@@ -380,7 +385,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
             PILToTensor(),
             ConvertImageDtype(torch.float),
             Normalize(normMean, normStd)
-            #Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+            # Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
     )
 
