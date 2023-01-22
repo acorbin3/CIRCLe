@@ -115,7 +115,7 @@ for epoch in range(flags.epochs):
     print(
         f'Epoch {epoch}: Best val loss {best_val_loss:.4f}, Best val acc {best_val_acc:.4f}, best val recall {best_val_recall:.4f}, best val precision {best_val_precision:.4f}')
     model.train()
-
+    i = 0
     for x, y, transformed_image in tqdm(train_loader, ncols=75, leave=False):
 
         optim.zero_grad()
@@ -144,11 +144,14 @@ for epoch in range(flags.epochs):
 
         metrics.update_metrics(x[0].shape[0])
         optim.step()
+        i += 1
+        if (i + 1) % 100 == 0:
+            print(f'[epoch {epoch}], [iter {i + 1} / {len(train_loader)}], [train loss {metrics.loss_meter}], [train acc {metrics.accuracy_meter}]')
 
     print(
         f'\t>>> Training: Loss {metrics.loss_meter}, Reg {metrics.regularization_meter}, Acc {metrics.accuracy_meter}, precision: {metrics.precision_meter}, recall{metrics.recall_meter}')
 
-    # model.eval()
+    model.eval()
     with torch.no_grad():
         for x, y, transformed_image in tqdm(val_loader, ncols=75, leave=False):
             x, y, transformed_image = x.to(device), y.to(device), transformed_image.to(device)
