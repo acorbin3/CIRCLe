@@ -108,7 +108,7 @@ best_val_precision = 0
 best_val_recall = 0
 
 # TODO- update to use pytorch metrics: https://torchmetrics.readthedocs.io/en/stable/pages/overview.html
-loss_function = nn.CrossEntropyLoss(weight=class_weights).to(device)
+loss_function = nn.CrossEntropyLoss(weight=class_weights.float()).to(device)
 metrics = Metrics()
 val_metrics = Metrics()
 total_loss_train, total_acc_train = [],[]
