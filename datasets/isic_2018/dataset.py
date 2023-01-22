@@ -294,6 +294,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     ros = RandomOverSampler()
     train, _ = ros.fit_resample(train, train["label"])
 
+    print(train.head())
+
     # max = counts.max()
     # for c in conditions:
     #    value = counts[c]
