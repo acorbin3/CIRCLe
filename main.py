@@ -147,7 +147,8 @@ for epoch in range(flags.epochs):
         metrics.update_metrics(x[0].shape[0])
         optim.step()
         i += 1
-        if (i + 1) % 100 == 0:
+        if (i + 1) % 50 == 0:
+            print()
             print(f'[epoch {epoch}], [iter {i + 1} / {len(train_loader)}], [train loss {metrics.loss_meter}], [train acc {metrics.accuracy_meter}]')
             total_loss_train.append(metrics.loss_meter.float())
             total_acc_train.append(metrics.accuracy_meter.float())

@@ -288,22 +288,25 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     # TODO - need to add more training data for the classes that are not balanced
     conditions = isic_df["label"].unique().tolist()
 
-
     counts = train["label"].value_counts()
 
     print("Before augmentation")
 
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
 
-    # compute class weights
-    class_weights = class_weight.compute_class_weight('balanced', classes=train["label_encoded"].unique().tolist(), y=train["label_encoded"])
-    # Create a weighted sampler
-    weights = class_weights[train["label_encoded"]]
-    class_weights = torch.from_numpy(class_weights)
-    sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights))
-
     if False:
-        ros = RandomOverSampler()
+        # compute class weights
+        class_weights = class_weight.compute_class_weight('balanced', classes=train["label_encoded"].unique().tolist(),
+                                                          y=train["label_encoded"])
+        # Create a weighted sampler
+        weights = class_weights[train["label_encoded"]]
+        class_weights = torch.from_numpy(class_weights)
+        sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights))
+    else:
+        class_weights = torch.from_numpy(np.array([1, 1, 1, 1, 1, 1, 1]))
+
+    if True:
+        ros = RandomOverSampler('not majority', random_state=42)
         train, _ = ros.fit_resample(train, train["label"])
         pd.options.display.max_columns = None
 
@@ -314,10 +317,10 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     #    value = counts[c]
     #    ratio = int(max / value)
     #    print(c, value, ratio)
-        # This is to oversampled, but this approach didnt seem to work well
-        # if False:
-        # train = train.append([train.loc[train['label'] == c, :]] * (ratio - 1),
-        #                     ignore_index=True)
+    # This is to oversampled, but this approach didnt seem to work well
+    # if False:
+    # train = train.append([train.loc[train['label'] == c, :]] * (ratio - 1),
+    #                     ignore_index=True)
     print("After augmentation")
     print(train["label"].value_counts())
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
