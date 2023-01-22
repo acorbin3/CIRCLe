@@ -22,6 +22,8 @@ from datasets.transforms import Compose, RandomRotation, RandomHorizontalFlip, R
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset
 
+from sklearn.utils import class_weight
+
 
 class ISIC2018SkinDataset(Dataset):
     def __init__(self, df, transform=None):
@@ -286,16 +288,25 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     # TODO - need to add more training data for the classes that are not balanced
     conditions = isic_df["label"].unique().tolist()
 
+
     counts = train["label"].value_counts()
 
     print("Before augmentation")
 
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
-    ros = RandomOverSampler()
-    train, _ = ros.fit_resample(train, train["label"])
-    pd.options.display.max_columns = None
 
-    print(train.head())
+    # compute class weights
+    class_weights = class_weight.compute_class_weight('balanced', classes=isic_df["label_encoded"].unique().tolist(), y=isic_df["label_encoded"])
+    # Create a weighted sampler
+    weights = class_weights[isic_df["label_encoded"]]
+    sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights))
+
+    if False:
+        ros = RandomOverSampler()
+        train, _ = ros.fit_resample(train, train["label"])
+        pd.options.display.max_columns = None
+
+        print(train.head())
 
     # max = counts.max()
     # for c in conditions:
@@ -397,19 +408,20 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
         batch_size=batch_size,
         drop_last=True,
         pin_memory=True,
-        num_workers=4)
+        num_workers=2,
+        sampler=sampler)
 
     val_loader = torch.utils.data.DataLoader(
         transformed_val,
         batch_size=batch_size,
-        shuffle=False, drop_last=False, pin_memory=True, num_workers=4)
+        shuffle=False, drop_last=False, pin_memory=True, num_workers=2)
 
     test_loader = torch.utils.data.DataLoader(
         transformed_test,
         batch_size=batch_size,
-        shuffle=False, drop_last=False, pin_memory=True, num_workers=4)
+        shuffle=False, drop_last=False, pin_memory=True, num_workers=2)
 
-    return train_loader, val_loader, test_loader
+    return train_loader, val_loader, test_loader, class_weights
 
 
 def print_splits(all_domains, conditions, df_collection):

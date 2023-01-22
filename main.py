@@ -66,7 +66,7 @@ if flags.dataset == "FitzPatrick17k":
 elif flags.dataset == "isic2018":
     download_isic_2018_datasets()
     isic_df = get_cached_dataframe()
-    train_loader, val_loader, test_loader = get_isic_2018_dataloaders(isic_df)
+    train_loader, val_loader, test_loader, class_weights = get_isic_2018_dataloaders(isic_df)
 
 # load models
 if flags.model != "cnn":
@@ -108,9 +108,9 @@ best_val_precision = 0
 best_val_recall = 0
 
 # TODO- update to use pytorch metrics: https://torchmetrics.readthedocs.io/en/stable/pages/overview.html
-
-metrics = Metrics(nn.CrossEntropyLoss().to(device))
-val_metrics = Metrics(nn.CrossEntropyLoss().to(device))
+loss_function = nn.CrossEntropyLoss(weight=class_weights).to(device)
+metrics = Metrics()
+val_metrics = Metrics()
 total_loss_train, total_acc_train = [],[]
 total_loss_val, total_acc_val = [],[]
 for epoch in range(flags.epochs):
@@ -133,7 +133,7 @@ for epoch in range(flags.epochs):
         outputs = model(inputs)
 
         # Compute metrics for main input image
-        metrics.compute_metrics(outputs, labels)
+        metrics.compute_metrics(outputs, labels, loss_function(outputs, labels))
 
         if False:
             logits_transformed, base_output_transformed = model(inputs_transformed)
@@ -168,7 +168,7 @@ for epoch in range(flags.epochs):
                 reg = flags.alpha * F.mse_loss(base_output_transformed, base_output)
                 val_metrics.reg = reg
 
-            val_metrics.compute_metrics(outputs, y)
+            val_metrics.compute_metrics(outputs, y, loss_function(outputs, y))
             val_metrics.update_metrics(x.shape[0])
         total_loss_val.append(val_metrics.loss_meter.float())
         total_acc_val.append(val_metrics.accuracy_meter.float())
