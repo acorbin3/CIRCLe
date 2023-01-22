@@ -293,7 +293,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     print(train["label"].value_counts(normalize=True, sort=False).mul(100).round(2))
     ros = RandomOverSampler()
     train, _ = ros.fit_resample(train, train["label"])
-    pd.options.display.max_rows = None
+    pd.options.display.max_columns = None
 
     print(train.head())
 
