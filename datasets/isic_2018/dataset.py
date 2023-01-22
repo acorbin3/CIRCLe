@@ -299,6 +299,7 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
     class_weights = class_weight.compute_class_weight('balanced', classes=isic_df["label_encoded"].unique().tolist(), y=isic_df["label_encoded"])
     # Create a weighted sampler
     weights = class_weights[isic_df["label_encoded"]]
+    class_weights = torch.from_numpy(class_weights)
     sampler = torch.utils.data.sampler.WeightedRandomSampler(weights, len(weights))
 
     if False:
