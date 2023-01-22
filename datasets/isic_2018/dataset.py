@@ -413,7 +413,8 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
         drop_last=True,
         pin_memory=True,
         num_workers=2,
-        sampler=sampler)
+        #sampler=sampler
+    )
 
     val_loader = torch.utils.data.DataLoader(
         transformed_val,
