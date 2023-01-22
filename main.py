@@ -89,7 +89,7 @@ LBFGS (Limited-memory Broyden–Fletcher–Goldfarb–Shanno): This is an optimi
 There are many other optimizers available in PyTorch, such as Adagrad, Adadelta, and others
 """
 # optim = torch.optim.SGD(model.parameters(), lr=flags.lr, weight_decay=flags.weight_decay, momentum=0.9)
-optim = torch.optim.Adam(lr=0.001, betas=(0.9, 0.999), eps=1e-8)
+optim = torch.optim.Adam(model.parameters(), lr=0.001, betas=(0.9, 0.999), eps=1e-8)
 
 
 def to_device(data):
