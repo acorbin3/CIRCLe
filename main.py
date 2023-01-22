@@ -89,7 +89,7 @@ LBFGS (Limited-memory Broyden–Fletcher–Goldfarb–Shanno): This is an optimi
 There are many other optimizers available in PyTorch, such as Adagrad, Adadelta, and others
 """
 # optim = torch.optim.SGD(model.parameters(), lr=flags.lr, weight_decay=flags.weight_decay, momentum=0.9)
-optim = torch.optim.Adam(model.parameters(), lr=1e-3)
+optim = torch.optim.Adam(lr=0.001, betas=(0.9, 0.999), eps=1e-8)
 
 
 def to_device(data):
@@ -121,7 +121,7 @@ for epoch in range(flags.epochs):
     for x, y, transformed_image in tqdm(train_loader, ncols=75, leave=False):
 
         optim.zero_grad()
-        # insead of optim.zero_grad(), the below lines are suppose to be faster
+        # insead of optim.zero_grad(), the below lines are supposed to be faster
         #for param in model.parameters():
         #    param.grad = None
 
@@ -142,7 +142,7 @@ for epoch in range(flags.epochs):
             metrics.reg = reg
         else:
             metrics.reg = None
-            metrics.loss.backward()
+            metrics.loss.float().backward()
 
         metrics.update_metrics(x[0].shape[0])
         optim.step()
