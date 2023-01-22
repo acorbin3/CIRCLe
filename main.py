@@ -111,6 +111,8 @@ best_val_recall = 0
 
 metrics = Metrics(nn.CrossEntropyLoss().to(device))
 val_metrics = Metrics(nn.CrossEntropyLoss().to(device))
+total_loss_train, total_acc_train = [],[]
+total_loss_val, total_acc_val = [],[]
 for epoch in range(flags.epochs):
     print(
         f'Epoch {epoch}: Best val loss {best_val_loss:.4f}, Best val acc {best_val_acc:.4f}, best val recall {best_val_recall:.4f}, best val precision {best_val_precision:.4f}')
@@ -147,6 +149,8 @@ for epoch in range(flags.epochs):
         i += 1
         if (i + 1) % 100 == 0:
             print(f'[epoch {epoch}], [iter {i + 1} / {len(train_loader)}], [train loss {metrics.loss_meter}], [train acc {metrics.accuracy_meter}]')
+            total_loss_train.append(metrics.loss_meter.float())
+            total_acc_train.append(metrics.accuracy_meter.float())
 
     print(
         f'\t>>> Training: Loss {metrics.loss_meter}, Reg {metrics.regularization_meter}, Acc {metrics.accuracy_meter}, precision: {metrics.precision_meter}, recall{metrics.recall_meter}')
@@ -166,6 +170,9 @@ for epoch in range(flags.epochs):
 
             val_metrics.compute_metrics(outputs, y)
             val_metrics.update_metrics(x.shape[0])
+        total_loss_val.append(val_metrics.loss_meter.float())
+        total_acc_val.append(val_metrics.accuracy_meter.float())
+
 
     if flags.use_reg_loss:
         print(

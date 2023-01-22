@@ -35,12 +35,12 @@ class Metrics:
         self.recall = _diagonal / self.confusion_matrix.sum(axis=1).sum()
         return
 
-    def update_metrics(self, data):
+    def update_metrics(self, size):
         # data  = data[0].shape[0]
-        self.loss_meter.update(self.loss.detach().item(), data)
-        self.accuracy_meter.update(self.accuracy.detach().item(), data)
-        self.precision_meter.update(self.precision, data)
-        self.recall_meter.update(self.recall, data)
+        self.loss_meter.update(self.loss.detach().item(), size)
+        self.accuracy_meter.update(self.accuracy.detach().item(), size)
+        self.precision_meter.update(self.precision, size)
+        self.recall_meter.update(self.recall, size)
         if self.reg is not None:
-            self.regularization_meter.update(self.reg.detach().item(), data)
+            self.regularization_meter.update(self.reg.detach().item(), size)
         return

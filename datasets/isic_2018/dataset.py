@@ -397,17 +397,17 @@ def get_isic_2018_dataloaders(isic_df, batch_size=32, image_size=128, shuffle=Tr
         batch_size=batch_size,
         drop_last=True,
         pin_memory=True,
-        num_workers=2)
+        num_workers=4)
 
     val_loader = torch.utils.data.DataLoader(
         transformed_val,
         batch_size=batch_size,
-        shuffle=False, drop_last=False, pin_memory=True, num_workers=2)
+        shuffle=False, drop_last=False, pin_memory=True, num_workers=4)
 
     test_loader = torch.utils.data.DataLoader(
         transformed_test,
         batch_size=batch_size,
-        shuffle=False, drop_last=False, pin_memory=True, num_workers=2)
+        shuffle=False, drop_last=False, pin_memory=True, num_workers=4)
 
     return train_loader, val_loader, test_loader
 
